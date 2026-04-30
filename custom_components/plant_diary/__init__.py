@@ -6,6 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.loader import IntegrationNotLoaded
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import translation
 
 from .const import DOMAIN, PLANT_DIARY_MANAGER
 from .PlantDiaryManager import PlantDiaryManager
@@ -17,6 +18,8 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up the integration from a config entry."""
+
+    await translation.async_load_integrations(hass, {DOMAIN})
 
     # Initialize the DOMAIN in hass.data if it doesn't exist
     if DOMAIN not in hass.data:

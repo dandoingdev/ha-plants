@@ -22,6 +22,16 @@ from .const import (
 )
 from .PlantDiaryManager import PlantDiaryManager
 
+# Dict labels display even if backend translations are not yet cached (list menus rely on i18n only).
+OPTIONS_MENU_INIT: dict[str, str] = {
+    "reminder_settings": "Reminder notifications",
+    "add_plant": "Add plant",
+    "edit_plant": "Edit plant",
+    "delete_plant": "Delete plant",
+    "attach_rf_tag": "Link RF/NFC tag to plant",
+    "remove_rf_tag": "Remove tag link",
+}
+
 
 def _coerce_reminder_time(value: Any) -> tuple[int, int]:
     """Return (hour, minute) from TimeSelector / time / dict / string."""
@@ -119,15 +129,7 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
         """Offer reminder settings or plant management."""
         return self.async_show_menu(
             step_id="init",
-            menu_options=[
-                "reminder_settings",
-                "add_plant",
-                "edit_plant",
-                "delete_plant",
-                "attach_rf_tag",
-                "remove_rf_tag",
-            ],
-            sort=True,
+            menu_options=OPTIONS_MENU_INIT,
         )
 
     async def async_step_reminder_settings(
