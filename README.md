@@ -66,8 +66,11 @@ URL: /local/plant_diary/ha-plant-diary-card.js
 
 ### Plant Diary integration
 
-1. Go to **Settings > Devices & Services > Devices > Add Device**.
+Plant Diary is set up only through the Home Assistant UI: do not add a `plant_diary:` block to `configuration.yaml`.
+
+1. Go to **Settings > Devices & Services > Add integration**.
 2. Search for **Plant Diary** and add it.
+3. Open **Plant Diary** on the integration card, then **Configure** to set **reminder notifications** or to **add, edit, or delete plants** (you can still use the **Plant Diary** actions under **Developer tools > Actions** if you prefer).
 
 ### Plant Diary Card
 

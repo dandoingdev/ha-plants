@@ -6,16 +6,18 @@ from unittest import mock
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from homeassistant import config_entries
+from homeassistant import config_entries, data_entry_flow
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.loader import Integration
 from homeassistant.setup import async_setup_component
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.plant_diary import (
     async_reload_entry,
     config_flow,
 )
+from custom_components.plant_diary.const import DOMAIN
 
 DEFAULT_NAME = "My Plant Diary"
 
@@ -95,6 +97,26 @@ async def test_flow_user_init(hass) -> None:
     assert expected == result
 
     await hass.config_entries.async_unload(result["result"].entry_id)
+
+
+@pytest.mark.asyncio
+async def test_options_flow_init_shows_menu(hass) -> None:
+    """Configure integration opens a menu (reminders + plants) in the UI."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Plant Diary",
+        data={"plants": {}},
+        options={},
+    )
+    entry.add_to_hass(hass)
+
+    flow = config_flow.PlantDiaryOptionsFlow()
+    flow.hass = hass
+    flow.handler = entry.entry_id
+
+    result = await flow.async_step_init()
+    assert result["type"] == data_entry_flow.FlowResultType.MENU
+    assert result["step_id"] == "init"
 
 
 @pytest.mark.asyncio

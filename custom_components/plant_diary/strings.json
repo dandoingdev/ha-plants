@@ -13,14 +13,75 @@
   "options": {
     "step": {
       "init": {
-        "title": "Plant Diary reminders",
+        "title": "Plant Diary",
+        "menu_options": {
+          "reminder_settings": "Reminder notifications",
+          "add_plant": "Add plant",
+          "edit_plant": "Edit plant",
+          "delete_plant": "Delete plant"
+        }
+      },
+      "reminder_settings": {
+        "title": "Reminder notifications",
         "data": {
           "reminders_enabled": "Enable reminder notifications",
           "reminder_time": "Reminder time",
           "notify_entity_id": "Notify entity (optional)",
           "reminder_persistent": "Also show persistent notification in Home Assistant"
         }
+      },
+      "add_plant": {
+        "title": "Add plant",
+        "data": {
+          "plant_name": "Plant name",
+          "last_watered": "Last watered",
+          "last_fertilized": "Last fertilized",
+          "watering_interval": "Watering interval (days)",
+          "watering_postponed": "Watering postponed (days)",
+          "fertilizing_interval": "Fertilizing interval (days, 0 = off)",
+          "inside": "Indoor plant",
+          "image": "Image URL (optional)"
+        }
+      },
+      "edit_plant": {
+        "title": "Choose plant to edit",
+        "data": {
+          "plant_id": "Plant"
+        }
+      },
+      "edit_plant_details": {
+        "title": "Edit plant",
+        "data": {
+          "plant_name": "Plant name",
+          "last_watered": "Last watered",
+          "last_fertilized": "Last fertilized",
+          "watering_interval": "Watering interval (days)",
+          "watering_postponed": "Watering postponed (days)",
+          "fertilizing_interval": "Fertilizing interval (days, 0 = off)",
+          "inside": "Indoor plant",
+          "image": "Image URL (optional)"
+        }
+      },
+      "delete_plant": {
+        "title": "Choose plant to delete",
+        "data": {
+          "plant_id": "Plant"
+        }
+      },
+      "delete_confirm": {
+        "title": "Confirm deletion",
+        "description": "This will remove {plant_id} and its sensor entity.",
+        "data": {
+          "confirm_delete": "I understand, delete this plant"
+        }
       }
+    },
+    "abort": {
+      "no_plants": "There are no plants to edit or delete yet.",
+      "integration_not_loaded": "Plant Diary is not running; try again after the integration loads."
+    },
+    "error": {
+      "plant_name_required": "Enter a plant name."
     }
   }
 }
