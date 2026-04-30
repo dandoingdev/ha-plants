@@ -1,7 +1,7 @@
 """Module for managing the HA Plants component."""
 
 import logging
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from homeassistant.util.dt import now as dt_now
@@ -23,6 +23,7 @@ from .const import (
     DEFAULT_REMINDER_MINUTE,
     DOMAIN,
     OPTION_REMINDER_LAST_SENT,
+    OPTION_RF_TAG_MAP,
 )
 from .PlantDiaryEntity import PlantDiaryEntity
 
@@ -68,12 +69,34 @@ class PlantDiaryManager:
         async def handle_update_days_since_last_watered(_call: ServiceCall):
             await self.async_update_all_days_since_last_watered()
 
+        async def handle_log_watered(call: ServiceCall):
+            await self.async_log_watered(
+                call.data["plant_id"], call.data.get("last_watered")
+            )
+
+        async def handle_log_watered_by_tag(call: ServiceCall):
+            await self.async_log_watered_by_tag(call.data["tag_id"])
+
+        async def handle_attach_rf_tag(call: ServiceCall):
+            await self.async_attach_rf_tag(
+                call.data["tag_id"], call.data["plant_id"]
+            )
+
+        async def handle_remove_rf_tag(call: ServiceCall):
+            await self.async_remove_rf_tag(call.data["tag_id"])
+
         self.hass.services.async_register(DOMAIN, "create_plant", handle_create_plant)
         self.hass.services.async_register(DOMAIN, "update_plant", handle_update_plant)
         self.hass.services.async_register(DOMAIN, "delete_plant", handle_delete_plant)
         self.hass.services.async_register(
             DOMAIN, "update_days_since_watered", handle_update_days_since_last_watered
         )
+        self.hass.services.async_register(DOMAIN, "log_watered", handle_log_watered)
+        self.hass.services.async_register(
+            DOMAIN, "log_watered_by_tag", handle_log_watered_by_tag
+        )
+        self.hass.services.async_register(DOMAIN, "attach_rf_tag", handle_attach_rf_tag)
+        self.hass.services.async_register(DOMAIN, "remove_rf_tag", handle_remove_rf_tag)
 
         self._midnight_listener = async_track_time_change(
             self.hass,
@@ -84,6 +107,91 @@ class PlantDiaryManager:
         )
 
         self._register_reminder_listener()
+
+    @staticmethod
+    def _last_watered_iso(value: Any | None) -> str:
+        """Normalize service/UI input to YYYY-MM-DD."""
+        if value is None:
+            return dt_now().date().isoformat()
+        if isinstance(value, datetime):
+            return value.date().isoformat()
+        if isinstance(value, date):
+            return value.isoformat()
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return dt_now().date().isoformat()
+            if "T" in stripped:
+                return stripped.split("T", 1)[0][:10]
+            return stripped[:10] if len(stripped) >= 10 else stripped
+        if isinstance(value, dict):
+            inner = value.get("datetime") or value.get("date")
+            if inner is not None:
+                return PlantDiaryManager._last_watered_iso(inner)
+            return dt_now().date().isoformat()
+        return dt_now().date().isoformat()
+
+    def _rf_tag_map(self) -> dict[str, str]:
+        raw = self.entry.options.get(OPTION_RF_TAG_MAP, {})
+        if not isinstance(raw, dict):
+            return {}
+        out: dict[str, str] = {}
+        for key, plant_id in raw.items():
+            tag = str(key).strip()
+            if tag and plant_id is not None:
+                out[tag] = str(plant_id)
+        return out
+
+    def _prune_rf_tags_for_plant(self, plant_id: str) -> None:
+        mapping = self._rf_tag_map()
+        new_map = {k: v for k, v in mapping.items() if v != plant_id}
+        if new_map == mapping:
+            return
+        opts = dict(self.entry.options)
+        opts[OPTION_RF_TAG_MAP] = new_map
+        self.hass.config_entries.async_update_entry(self.entry, options=opts)
+
+    async def async_log_watered(self, plant_id: str, last_watered: Any | None = None):
+        """Set last watered date (default today) and persist."""
+        date_str = self._last_watered_iso(last_watered)
+        await self.update_plant({"plant_id": plant_id, "last_watered": date_str})
+
+    async def async_log_watered_by_tag(self, tag_id: str):
+        """Resolve plant from RF/tag id and log as watered."""
+        tag_key = (tag_id or "").strip()
+        plant_id = self._rf_tag_map().get(tag_key)
+        if not plant_id:
+            _LOGGER.warning("No plant linked to tag %s", tag_key)
+            return
+        await self.async_log_watered(plant_id)
+
+    async def async_attach_rf_tag(self, tag_id: str, plant_id: str):
+        """Map an RF or NFC tag id to a plant for log_watered_by_tag."""
+        tag_key = (tag_id or "").strip()
+        if not tag_key:
+            _LOGGER.error("tag_id is required")
+            return
+        if plant_id not in self.entities:
+            _LOGGER.error("Plant %s not found", plant_id)
+            return
+        opts = dict(self.entry.options)
+        mapping = self._rf_tag_map()
+        mapping[tag_key] = plant_id
+        opts[OPTION_RF_TAG_MAP] = mapping
+        self.hass.config_entries.async_update_entry(self.entry, options=opts)
+
+    async def async_remove_rf_tag(self, tag_id: str):
+        """Remove a tag-to-plant mapping."""
+        tag_key = (tag_id or "").strip()
+        if not tag_key:
+            return
+        mapping = self._rf_tag_map()
+        if tag_key not in mapping:
+            return
+        del mapping[tag_key]
+        opts = dict(self.entry.options)
+        opts[OPTION_RF_TAG_MAP] = mapping
+        self.hass.config_entries.async_update_entry(self.entry, options=opts)
 
     def _register_reminder_listener(self) -> None:
         """Schedule daily reminders at the configured local time."""
@@ -159,6 +267,8 @@ class PlantDiaryManager:
         if not entity:
             _LOGGER.error("Plant with ID %s not found", plant_id)
             return
+
+        self._prune_rf_tags_for_plant(plant_id)
 
         # Remove from config entry
         if update_config_entry:

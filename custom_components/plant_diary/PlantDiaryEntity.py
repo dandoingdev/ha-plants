@@ -146,9 +146,26 @@ class PlantDiaryEntity(SensorEntity):
 
     def _parse_date(self, value: Any) -> date | None:
         """Parse a date from various formats."""
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        if isinstance(value, dict):
+            inner = value.get("datetime") or value.get("date")
+            if inner is not None:
+                return self._parse_date(inner)
+            return None
         if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return None
+            if "T" in stripped:
+                try:
+                    return datetime.strptime(stripped.split("T", 1)[0][:10], "%Y-%m-%d").date()
+                except ValueError:
+                    return None
             try:
-                return datetime.strptime(value, "%Y-%m-%d").date()
+                return datetime.strptime(stripped[:10], "%Y-%m-%d").date()
             except ValueError:
                 return None
         return None

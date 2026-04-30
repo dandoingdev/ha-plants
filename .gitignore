@@ -18,6 +18,12 @@ test-results.xml
 test-output.xml
 pytest-*.txt
 
+# Local HA dev (docker compose) — do not commit runtime data or secrets
+dev-config/
+.env
+.env.local
+docker-compose.override.yml
+
 # config
 config/.cloud
 config/.storage
@@ -29,4 +35,3 @@ config/home-assistant*.*
 config/*.yaml
 
 custom_components/plant_diary/core.code-workspace
-.gitignore

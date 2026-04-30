@@ -134,3 +134,111 @@ delete_plant:
       example: "My Plant"
       selector:
         text:
+log_watered:
+  name: Log watered
+  description: Record that a plant was watered (defaults to today).
+  fields:
+    plant_id:
+      name: Plant ID
+      description: Plant id (the name/key used when the plant was created)
+      required: true
+      example: "Monstera"
+      selector:
+        text:
+    last_watered:
+      name: Last watered
+      description: Optional date/time to store (defaults to today)
+      required: false
+      selector:
+        datetime: {}
+log_watered_by_tag:
+  name: Log watered by tag
+  description: Mark the plant linked to this tag id as watered. Configure links via integration options or attach_rf_tag.
+  fields:
+    tag_id:
+      name: Tag id
+      description: RF/NFC tag identifier from your scanner or Tag integration
+      required: true
+      example: "04:AB:12:..."
+      selector:
+        text:
+attach_rf_tag:
+  name: Link tag to plant
+  description: Map a tag id to a plant for log_watered_by_tag
+  fields:
+    tag_id:
+      name: Tag id
+      description: Tag uid as reported when scanned
+      required: true
+      selector:
+        text:
+    plant_id:
+      name: Plant ID
+      description: Plant to update when this tag is scanned
+      required: true
+      selector:
+        text:
+remove_rf_tag:
+  name: Remove tag link
+  description: Remove a tag id to plant mapping
+  fields:
+    tag_id:
+      name: Tag id
+      description: Previously linked tag id
+      required: true
+      selector:
+        text:
+log_watered:
+  name: Log watered
+  description: Record that a plant was watered (defaults to today).
+  fields:
+    plant_id:
+      name: Plant ID
+      description: Plant id (the name/key used when the plant was created)
+      required: true
+      example: "Monstera"
+      selector:
+        text:
+    last_watered:
+      name: Last watered
+      description: Optional date/time to store (defaults to today)
+      required: false
+      selector:
+        datetime: {}
+log_watered_by_tag:
+  name: Log watered by tag
+  description: Mark the plant linked to this tag id as watered. Configure links via integration options or attach_rf_tag.
+  fields:
+    tag_id:
+      name: Tag id
+      description: RF/NFC tag identifier from your scanner or Tag integration
+      required: true
+      example: "04:AB:12:..."
+      selector:
+        text:
+attach_rf_tag:
+  name: Link tag to plant
+  description: Map a tag id to a plant for log_watered_by_tag
+  fields:
+    tag_id:
+      name: Tag id
+      description: Tag uid as reported when scanned
+      required: true
+      selector:
+        text:
+    plant_id:
+      name: Plant ID
+      description: Plant to update when this tag is scanned
+      required: true
+      selector:
+        text:
+remove_rf_tag:
+  name: Remove tag link
+  description: Remove a tag id to plant mapping
+  fields:
+    tag_id:
+      name: Tag id
+      description: Previously linked tag id
+      required: true
+      selector:
+        text:

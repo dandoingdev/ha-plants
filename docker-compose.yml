@@ -1,0 +1,26 @@
+# Local Home Assistant for developing ha-plants.
+#
+# Usage: docker compose up
+# UI: http://localhost:8123 — complete onboarding, then Settings → Devices & services → Add integration → HA Plants.
+#
+# Single bind mount avoids nested volumes (/config + /config/custom_components), which break Podman/crun.
+# Repo is mounted at /ha-plants; HA uses ./dev-config as its config directory.
+#
+# One-time (from repo root): RELATIVE symlink so custom_components resolves inside the Linux VM:
+#   rm -rf dev-config/custom_components
+#   ln -sfn ../custom_components dev-config/custom_components
+#
+# Copy .env.example to .env and set TZ for reminder-time testing.
+
+services:
+  homeassistant:
+    container_name: ha-plants-dev
+    image: ghcr.io/home-assistant/home-assistant:2025.4.4
+    volumes:
+      - .:/ha-plants
+    ports:
+      - "8123:8123"
+    environment:
+      - TZ=${TZ:-UTC}
+    restart: unless-stopped
+    command: python3 -m homeassistant --config /ha-plants/dev-config

@@ -2,14 +2,20 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Deploy plant-diary",
+      "label": "Home Assistant: docker compose up",
       "type": "shell",
-      "command": "sh",
-      "args": [
-        "-c",
-        "mkdir -p /workspaces/core/config/custom_components/plant_diary && cp -r /workspaces/ha-plant-diary/custom_components/plant_diary /workspaces/core/config/custom_components"],
-      "group": "build",
-      "detail": "Deploy plant-diary to core configuration",
+      "command": "docker compose up",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
     }
   ]
 }

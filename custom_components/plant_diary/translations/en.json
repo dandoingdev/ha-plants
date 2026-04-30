@@ -19,7 +19,9 @@
           "reminder_settings": "Reminder notifications",
           "add_plant": "Add plant",
           "edit_plant": "Edit plant",
-          "delete_plant": "Delete plant"
+          "delete_plant": "Delete plant",
+          "attach_rf_tag": "Link RF/NFC tag to plant",
+          "remove_rf_tag": "Remove tag link"
         }
       },
       "reminder_settings": {
@@ -75,14 +77,29 @@
         "data": {
           "confirm_delete": "I understand, delete this plant"
         }
+      },
+      "attach_rf_tag": {
+        "title": "Link tag to plant",
+        "data": {
+          "tag_id": "Tag id (from scanner or Tag integration)",
+          "plant_id": "Plant"
+        }
+      },
+      "remove_rf_tag": {
+        "title": "Remove tag link",
+        "data": {
+          "tag_id": "Linked tag"
+        }
       }
     },
     "abort": {
       "no_plants": "There are no plants to edit or delete yet.",
+      "no_rf_tags": "No tag links are configured yet.",
       "integration_not_loaded": "HA Plants is not running; try again after the integration loads."
     },
     "error": {
-      "plant_name_required": "Enter a plant name."
+      "plant_name_required": "Enter a plant name.",
+      "tag_id_required": "Enter the tag id from your scanner."
     }
   }
 }

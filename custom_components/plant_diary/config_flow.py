@@ -17,6 +17,7 @@ from .const import (
     DEFAULT_REMINDER_HOUR,
     DEFAULT_REMINDER_MINUTE,
     DOMAIN,
+    OPTION_RF_TAG_MAP,
     PLANT_DIARY_MANAGER,
 )
 from .PlantDiaryManager import PlantDiaryManager
@@ -59,6 +60,18 @@ def _coerce_date_for_plant(value: Any) -> str:
 def _plants_dict(entry: config_entries.ConfigEntry) -> dict[str, Any]:
     raw = entry.data.get("plants", {})
     return dict(raw) if isinstance(raw, dict) else {}
+
+
+def _rf_tag_map(entry: config_entries.ConfigEntry) -> dict[str, str]:
+    raw = entry.options.get(OPTION_RF_TAG_MAP, {})
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, str] = {}
+    for key, plant_id in raw.items():
+        tag = str(key).strip()
+        if tag and plant_id is not None:
+            out[tag] = str(plant_id)
+    return out
 
 
 class PlantDiaryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -111,6 +124,8 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
                 "add_plant",
                 "edit_plant",
                 "delete_plant",
+                "attach_rf_tag",
+                "remove_rf_tag",
             ],
             sort=True,
         )
@@ -247,6 +262,89 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
                     selector.SelectSelectorConfig(options=options, mode=selector.SelectSelectorMode.DROPDOWN)
                 )
             }
+        )
+
+    def _attach_rf_tag_schema(self) -> vol.Schema:
+        plants = _plants_dict(self.config_entry)
+        options = [
+            {"value": plant_id, "label": f"{data.get('plant_name', plant_id)} ({plant_id})"}
+            for plant_id, data in sorted(plants.items(), key=lambda x: x[0].lower())
+        ]
+        return vol.Schema(
+            {
+                vol.Required("tag_id"): str,
+                vol.Required("plant_id"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=options, mode=selector.SelectSelectorMode.DROPDOWN
+                    )
+                ),
+            }
+        )
+
+    def _remove_rf_tag_pick_schema(self) -> vol.Schema:
+        plants = _plants_dict(self.config_entry)
+        tag_map = _rf_tag_map(self.config_entry)
+        options = [
+            {
+                "value": tag_id,
+                "label": f"{tag_id} → {plants.get(pid, {}).get('plant_name', pid)}",
+            }
+            for tag_id, pid in sorted(tag_map.items(), key=lambda x: x[0].lower())
+        ]
+        return vol.Schema(
+            {
+                vol.Required("tag_id"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=options, mode=selector.SelectSelectorMode.DROPDOWN
+                    )
+                )
+            }
+        )
+
+    async def async_step_attach_rf_tag(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Link an RF/NFC tag id to a plant."""
+        manager = self._get_manager()
+        if manager is None:
+            return self.async_abort(reason="integration_not_loaded")
+
+        plants = _plants_dict(self.config_entry)
+        if not plants:
+            return self.async_abort(reason="no_plants")
+
+        if user_input is not None:
+            tag_id = (user_input.get("tag_id") or "").strip()
+            if not tag_id:
+                return self.async_show_form(
+                    step_id="attach_rf_tag",
+                    data_schema=self._attach_rf_tag_schema(),
+                    errors={"base": "tag_id_required"},
+                )
+            await manager.async_attach_rf_tag(tag_id, user_input["plant_id"])
+            return self._finish_options_unchanged()
+
+        return self.async_show_form(
+            step_id="attach_rf_tag", data_schema=self._attach_rf_tag_schema()
+        )
+
+    async def async_step_remove_rf_tag(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Remove a tag-to-plant link."""
+        manager = self._get_manager()
+        if manager is None:
+            return self.async_abort(reason="integration_not_loaded")
+
+        if not _rf_tag_map(self.config_entry):
+            return self.async_abort(reason="no_rf_tags")
+
+        if user_input is not None:
+            await manager.async_remove_rf_tag(user_input["tag_id"])
+            return self._finish_options_unchanged()
+
+        return self.async_show_form(
+            step_id="remove_rf_tag", data_schema=self._remove_rf_tag_pick_schema()
         )
 
     async def async_step_edit_plant(
