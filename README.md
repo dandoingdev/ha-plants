@@ -15,6 +15,12 @@ This work has been inspired by [Plant tracker for Home Assistant](https://github
 - Logbook integration for activity tracking
 - Manage plants and reminders from the integration **Configure** UI, or use **Developer tools → Actions** (`plant_diary.*` services)
 
+# Requirements
+
+- **Home Assistant 2025.4.4** or newer (this is the minimum version recorded in [`hacs.json`](hacs.json) for HACS installs).
+- **Optional notify reminders:** if you set a **Notify entity**, HA Plants calls the **`notify.send_message`** action with `entity_id`, `title`, and `message`. Use a `notify.*` entity that implements the [Notify entity platform](https://www.home-assistant.io/integrations/notify/) in your setup. If you leave the notify field empty, you can still rely on **persistent notifications** only.
+- **HACS** (optional): when installing through HACS, use a HACS version that satisfies the `"hacs"` field in [`hacs.json`](hacs.json) (currently **2.0.5** or newer).
+
 # Installation
 
 You can install this component in two ways: via [HACS](https://github.com/hacs/integration) or manually.
