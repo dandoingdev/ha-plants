@@ -1,6 +1,6 @@
-"""Sensor platform for the Plant Diary custom component.
+"""Sensor platform for the HA Plants custom component.
 
-This module sets up the Plant Diary sensor platform and integrates it with Home Assistant.
+This module sets up the HA Plants sensor platform and integrates it with Home Assistant.
 """
 
 import logging
@@ -18,8 +18,8 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """Set up the Plant Diary sensor platform from a config entry."""
-    _LOGGER.debug("Setting up Plant Diary sensor platform")
+    """Set up the HA Plants sensor platform from a config entry."""
+    _LOGGER.debug("Setting up HA Plants sensor platform")
 
     # Recuperar el manager desde hass.data
     manager: PlantDiaryManager = hass.data[DOMAIN].get(PLANT_DIARY_MANAGER)

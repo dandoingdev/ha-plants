@@ -1,4 +1,4 @@
-"""Config flow for the Plant Diary integration."""
+"""Config flow for the HA Plants integration."""
 
 from datetime import date, datetime, time
 from typing import Any
@@ -62,7 +62,7 @@ def _plants_dict(entry: config_entries.ConfigEntry) -> dict[str, Any]:
 
 
 class PlantDiaryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle the configuration flow for the Plant Diary integration."""
+    """Handle the configuration flow for the HA Plants integration."""
 
     def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:
         """Check if the other flow matches this config flow."""
@@ -82,11 +82,11 @@ class PlantDiaryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if existing_entries:
             return self.async_abort(reason="single_instance_allowed")
 
-        return self.async_create_entry(title="Plant Diary", data={})
+        return self.async_create_entry(title="HA Plants", data={})
 
 
 class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
-    """Handle Plant Diary options (reminders and plants) in the UI."""
+    """Handle HA Plants options (reminders and plants) in the UI."""
 
     def __init__(self) -> None:
         """Initialize options flow."""

@@ -1,4 +1,4 @@
-# Test cases for the async_setup_entry function in the Plant Diary custom component for Home Assistant
+# Test cases for the async_setup_entry function in the HA Plants custom component for Home Assistant
 from typing import Iterable
 from unittest.mock import AsyncMock, MagicMock
 

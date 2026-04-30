@@ -2,18 +2,18 @@
   "config": {
     "step": {
       "user": {
-        "title": "Plant Diary",
+        "title": "HA Plants",
         "description": "Set up plant watering and fertilizing tracking."
       }
     },
     "abort": {
-      "single_instance_allowed": "Only one Plant Diary instance is allowed."
+      "single_instance_allowed": "Only one HA Plants instance is allowed."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Plant Diary",
+        "title": "HA Plants",
         "menu_options": {
           "reminder_settings": "Reminder notifications",
           "add_plant": "Add plant",
@@ -78,7 +78,7 @@
     },
     "abort": {
       "no_plants": "There are no plants to edit or delete yet.",
-      "integration_not_loaded": "Plant Diary is not running; try again after the integration loads."
+      "integration_not_loaded": "HA Plants is not running; try again after the integration loads."
     },
     "error": {
       "plant_name_required": "Enter a plant name."

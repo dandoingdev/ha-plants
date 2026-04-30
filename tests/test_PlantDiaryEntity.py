@@ -1,4 +1,4 @@
-# Test cases for PlantDiaryEntity class in the Plant Diary custom component for Home Assistant
+# Test cases for PlantDiaryEntity class in the HA Plants custom component for Home Assistant
 from datetime import date, timedelta
 
 import pytest

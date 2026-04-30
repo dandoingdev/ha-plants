@@ -1,4 +1,4 @@
-"""Plant Diary Entity."""
+"""HA Plants entity."""
 
 from datetime import date, datetime
 from typing import Any

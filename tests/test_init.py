@@ -1,4 +1,4 @@
-"""Tests for Plant Diary integration."""
+"""Tests for HA Plants integration."""
 
 import pathlib
 import types
@@ -19,9 +19,6 @@ from custom_components.plant_diary import (
 )
 from custom_components.plant_diary.const import DOMAIN
 
-DEFAULT_NAME = "My Plant Diary"
-
-
 @pytest.mark.asyncio
 async def test_flow_user_init(hass) -> None:
     """Test the initialization of the form in the first step of the config flow."""
@@ -35,7 +32,7 @@ async def test_flow_user_init(hass) -> None:
         file_path=pathlib.Path("custom_components/plant_diary/__init__.py"),
         manifest={
             "domain": config_flow.DOMAIN,
-            "name": "Plant Diary",
+            "name": "HA Plants",
             "version": "1.0.0",
             "requirements": [],
             "dependencies": [],
@@ -88,7 +85,7 @@ async def test_flow_user_init(hass) -> None:
         "options": {},
         "result": mock.ANY,
         "subentries": (),
-        "title": "Plant Diary",
+        "title": "HA Plants",
         "type": mock.ANY,
         "version": 1,
         "description_placeholders": None,
@@ -104,7 +101,7 @@ async def test_options_flow_init_shows_menu(hass) -> None:
     """Configure integration opens a menu (reminders + plants) in the UI."""
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Plant Diary",
+        title="HA Plants",
         data={"plants": {}},
         options={},
     )

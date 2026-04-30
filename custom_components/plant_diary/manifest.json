@@ -1,12 +1,12 @@
 {
   "domain": "plant_diary",
-  "name": "Plant Diary",
-  "codeowners": ["@xplanes"],
+  "name": "HA Plants",
+  "codeowners": ["@dandoingdev"],
   "config_flow": true,
   "dependencies": ["logbook"],
-  "documentation": "https://github.com/xplanes/ha-plant-diary",
+  "documentation": "https://github.com/dandoingdev/ha-plants",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/xplanes/ha-plant-diary/issues",
+  "issue_tracker": "https://github.com/dandoingdev/ha-plants/issues",
   "requirements": [],
   "version": "1.0.4"
 }

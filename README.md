@@ -1,6 +1,6 @@
-# 🌿 Plant Diary Integration for Home Assistant
+# 🌿 HA Plants for Home Assistant
 
-**Plant Diary** is a custom integration for [Home Assistant](https://www.home-assistant.io/) that helps you manage and monitor your houseplants. Track when each plant was last watered or fertilized, define care intervals, and visualize everything with a custom card [Plant Diary Card](https://github.com/xplanes/ha-plant-diary-card).
+**HA Plants** is a custom integration for [Home Assistant](https://www.home-assistant.io/) that helps you manage and monitor your houseplants. Track when each plant was last watered or fertilized, define care intervals, and visualize everything with a custom card [Plant Diary Card](https://github.com/xplanes/ha-plant-diary-card).
 
 This work has been inspired by [Plant tracker for Home Assistant](https://github.com/mountwebs/ha-plant-tracker).
 
@@ -18,13 +18,14 @@ You can install this component in two ways: via [HACS](https://github.com/hacs/i
 
 ## Option A: Installing via HACS
 
-### Plant Diary integration
+### HA Plants integration
 
-1. Go to the HACS Integration Tab
-2. Search the `Plant Diary` component and click on it.
-3. Click Download button at the bottom of the page. A pop up will be shown informing you that the component will be installed in the folder `/config/custom_components/plant_diary`. Click Download.
+1. In HACS, open the **⋮** menu (top right) and choose **Custom repositories**.
+2. Add **`https://github.com/dandoingdev/ha-plants`** as category **Integration**, then confirm **Add**.
+3. Open **HACS → Integrations**, refresh if needed, then select **HA Plants**.
+4. Click **Download**. A pop-up will show that the component is installed under `/config/custom_components/plant_diary`. Confirm **Download**.
 
-4. **Create folders for images and optional manual card files.** HACS does not create `www` subfolders for you. On the Home Assistant host, create a dedicated directory (SSH, **Terminal & SSH**, **File editor**, Samba, etc.), for example:
+5. **Create folders for images and optional manual card files.** HACS does not create `www` subfolders for you. On the Home Assistant host, create a dedicated directory (SSH, **Terminal & SSH**, **File editor**, Samba, etc.), for example:
 
    ```bash
    mkdir -p /config/www/plant_diary/images
@@ -34,15 +35,15 @@ You can install this component in two ways: via [HACS](https://github.com/hacs/i
 
 ### Plant Diary Card
 
-1. Go to the HACS Integration Tab
-2. Search the `Plant Diary Card` component and click on it.
-3. Click Download button at the bottom of the page. A pop up will be shown informing you that the component will be installed in the folder `/config/www/community/ha-plant-diary-card`. Click Download. The JavaScript module will be automatically added to the Dashboard Resources (/hacsfiles/ha-plant-diary-card/ha-plant-diary-card.js).
+1. Go to the HACS **Frontend** tab (or **Dashboard resources**, depending on your HACS version).
+2. Search for **Plant Diary Card** and open it.
+3. Click **Download**. The JavaScript module will be added to your dashboard resources (for example `/hacsfiles/ha-plant-diary-card/ha-plant-diary-card.js`).
 
 ## Option B: Manual Installation
 
-### Plant Diary integration
+### HA Plants integration
 
-1. Clone or download the GitHub repository: [ha-plant-diary](https://github.com/xplanes/ha-plant-diary)
+1. Clone or download this repository: [ha-plants](https://github.com/dandoingdev/ha-plants)
 2. Copy the `custom_components/plant_diary` folder to your Home Assistant `config/custom_components/` directory: config/custom_components/plant_diary
 3. Create folders under `www` for images (and the card, if you use a manual card install):
 
@@ -64,13 +65,13 @@ URL: /local/plant_diary/ha-plant-diary-card.js
 
 # Configuration
 
-### Plant Diary integration
+### HA Plants integration
 
-Plant Diary is set up only through the Home Assistant UI: do not add a `plant_diary:` block to `configuration.yaml`.
+HA Plants is set up only through the Home Assistant UI: do not add a `plant_diary:` block to `configuration.yaml`.
 
 1. Go to **Settings > Devices & Services > Add integration**.
-2. Search for **Plant Diary** and add it.
-3. Open **Plant Diary** on the integration card, then **Configure** to set **reminder notifications** or to **add, edit, or delete plants** (you can still use the **Plant Diary** actions under **Developer tools > Actions** if you prefer).
+2. Search for **HA Plants** and add it.
+3. Open **HA Plants** on the integration card, then **Configure** to set **reminder notifications** or to **add, edit, or delete plants** (you can still use the **HA Plants** actions under **Developer tools > Actions** if you prefer).
 
 ### Plant Diary Card
 
@@ -81,7 +82,7 @@ Plant Diary is set up only through the Home Assistant UI: do not add a `plant_di
 
 ## Sensors and attributes
 
-Plant Diary creates **one sensor entity per plant**. The entity id follows the pattern `sensor.plant_diary_<plant_id>`, where `<plant_id>` is the identifier you used when the plant was created (the same value as **`plant_name`** in the **Plant Diary: Create Plant** service). Home Assistant may adjust the id when it registers the entity (for example normalization); if in doubt, open **Developer Tools → States** and search for `plant_diary`.
+HA Plants creates **one sensor entity per plant**. The entity id follows the pattern `sensor.plant_diary_<plant_id>`, where `<plant_id>` is the identifier you used when the plant was created (the same value as **`plant_name`** in the **HA Plants: Create Plant** action). Home Assistant may adjust the id when it registers the entity (for example normalization); if in doubt, open **Developer Tools → States** and search for `plant_diary`.
 
 Each sensor’s **state** is a numeric care indicator (0–3) used by the integration and the Plant Diary card. The fields below are exposed as **sensor attributes** (and are what you usually show in automations, templates, and the card):
 
@@ -102,18 +103,18 @@ When you call **Create Plant** / **Update Plant**, use the field names above; th
 
 You can use your own photo (camera upload, image editor export, or a file downloaded from the web) and place it anywhere Home Assistant can serve under `/config/www/`.
 
-**Recommended layout:** keep Plant Diary files under `/config/www/plant_diary/` so uninstalling or backing up is straightforward. Home Assistant also provides a generic `/config/www/images/` folder; that works, but a **`plant_diary`-specific folder** (or `plant_diary/images/`) keeps plant photos grouped with this integration.
+**Recommended layout:** keep HA Plants files under `/config/www/plant_diary/` so uninstalling or backing up is straightforward. Home Assistant also provides a generic `/config/www/images/` folder; that works, but a **`plant_diary`-specific folder** (or `plant_diary/images/`) keeps plant photos grouped with this integration.
 
 Examples:
 
 - File on disk: `/config/www/plant_diary/Monstera.jpg` → URL for the `image` field: `/local/plant_diary/Monstera.jpg`
 - File on disk: `/config/www/plant_diary/images/Monstera.jpg` → URL: `/local/plant_diary/images/Monstera.jpg`
 
-Match the file name to how you reference the plant (e.g. **Monstera**) so it is easy to find. After adding or changing a file, set or update the `image` attribute via **Plant Diary: Update Plant** (or set it when creating the plant) to that `/local/...` URL.
+Match the file name to how you reference the plant (e.g. **Monstera**) so it is easy to find. After adding or changing a file, set or update the `image` attribute via **HA Plants: Update Plant** (or set it when creating the plant) to that `/local/...` URL.
 
 # Logbook Integration
 
-Plant Diary logs important events to the Home Assistant logbook. These entries help you keep track of changes made either manually or via automation.
+HA Plants logs important events to the Home Assistant logbook. These entries help you keep track of changes made either manually or via automation.
 
 - `Monstera was created.`
 - `Monstera was updated.`
@@ -125,7 +126,7 @@ These messages appear in Home Assistant’s **Logbook** panel.
 
 If you encounter any issues or would like to suggest improvements:
 
-- 📌 Open an issue on GitHub: [https://github.com/xplanes/ha-plant-diary/issues](https://github.com/xplanes/ha-plant-diary/issues)
+- 📌 Open an issue on GitHub: [https://github.com/dandoingdev/ha-plants/issues](https://github.com/dandoingdev/ha-plants/issues)
 - 🙌 Pull requests are welcome!
 
 Please include logs or reproduction steps when reporting bugs.

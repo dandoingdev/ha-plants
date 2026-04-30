@@ -1,4 +1,4 @@
-"""Module for managing the Plant Diary component."""
+"""Module for managing the HA Plants component."""
 
 import logging
 from datetime import datetime
@@ -123,7 +123,7 @@ class PlantDiaryManager:
         if entity:
             async_log_entry(
                 self.hass,
-                name="Plant Diary",
+                name="HA Plants",
                 message=f"Added new plant: {plant_id}",
                 domain=DOMAIN,
                 entity_id=f"{entity.entity_id}",
@@ -147,7 +147,7 @@ class PlantDiaryManager:
 
         async_log_entry(
             self.hass,
-            name="Plant Diary",
+            name="HA Plants",
             message=f"Updated plant: {plant_id}",
             domain=DOMAIN,
             entity_id=f"{entity.entity_id}",
@@ -175,7 +175,7 @@ class PlantDiaryManager:
 
         async_log_entry(
             self.hass,
-            name="Plant Diary",
+            name="HA Plants",
             message=f"Deleted plant: {plant_id}",
             domain=DOMAIN,
             entity_id=f"{entity.entity_id}",
@@ -234,7 +234,7 @@ class PlantDiaryManager:
 
         log_entry(
             self.hass,
-            name="Plant Diary",
+            name="HA Plants",
             message="Updated days since last watered for all plants: "
             + str(len(self.entities)),
             domain=DOMAIN,
@@ -306,10 +306,10 @@ class PlantDiaryManager:
     ) -> None:
         """Deliver one reminder via notify and/or persistent_notification."""
         if kind == "water":
-            title = "Plant Diary"
+            title = "HA Plants"
             message = f"{plant_name} needs watering."
         else:
-            title = "Plant Diary"
+            title = "HA Plants"
             message = f"{plant_name} needs fertilizing."
 
         safe_id = plant_id.replace(" ", "_")

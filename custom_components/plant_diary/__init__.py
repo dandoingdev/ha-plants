@@ -1,4 +1,4 @@
-"""Plant Diary component for Home Assistant."""
+"""HA Plants component for Home Assistant."""
 
 import logging
 

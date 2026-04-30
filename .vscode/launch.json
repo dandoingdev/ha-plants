@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
         {
-      "name": "Pytest: Plant Diary Tests",
+      "name": "Pytest: HA Plants Tests",
       "type": "debugpy",
       "request": "launch",
       "module": "pytest",
