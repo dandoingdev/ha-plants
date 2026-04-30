@@ -24,6 +24,14 @@ You can install this component in two ways: via [HACS](https://github.com/hacs/i
 2. Search the `Plant Diary` component and click on it.
 3. Click Download button at the bottom of the page. A pop up will be shown informing you that the component will be installed in the folder `/config/custom_components/plant_diary`. Click Download.
 
+4. **Create folders for images and optional manual card files.** HACS does not create `www` subfolders for you. On the Home Assistant host, create a dedicated directory (SSH, **Terminal & SSH**, **File editor**, Samba, etc.), for example:
+
+   ```bash
+   mkdir -p /config/www/plant_diary/images
+   ```
+
+   Use `plant_diary/` for the Lovelace card script if you install it manually (see below). Put plant photos in that folder or in `plant_diary/images/` so they stay separate from the card file and are easy to back up or remove with the integration.
+
 ### Plant Diary Card
 
 1. Go to the HACS Integration Tab
@@ -36,7 +44,13 @@ You can install this component in two ways: via [HACS](https://github.com/hacs/i
 
 1. Clone or download the GitHub repository: [ha-plant-diary](https://github.com/xplanes/ha-plant-diary)
 2. Copy the `custom_components/plant_diary` folder to your Home Assistant `config/custom_components/` directory: config/custom_components/plant_diary
-3. Restart Home Assistant.
+3. Create folders under `www` for images (and the card, if you use a manual card install):
+
+   ```bash
+   mkdir -p /config/www/plant_diary/images
+   ```
+
+4. Restart Home Assistant.
 
 ### Plant Diary Card
 
@@ -62,15 +76,37 @@ URL: /local/plant_diary/ha-plant-diary-card.js
 
 # Plant Data Fields
 
-| Field                | Description                                      |
+## Sensors and attributes
+
+Plant Diary creates **one sensor entity per plant**. The entity id follows the pattern `sensor.plant_diary_<plant_id>`, where `<plant_id>` is the identifier you used when the plant was created (the same value as **`plant_name`** in the **Plant Diary: Create Plant** service). Home Assistant may adjust the id when it registers the entity (for example normalization); if in doubt, open **Developer Tools → States** and search for `plant_diary`.
+
+Each sensor’s **state** is a numeric care indicator (0–3) used by the integration and the Plant Diary card. The fields below are exposed as **sensor attributes** (and are what you usually show in automations, templates, and the card):
+
+| Attribute            | Description                                      |
 | -------------------- | ------------------------------------------------ |
 | `plant_name`         | Name of the plant                                |
-| `last_watered`       | Last watered date (e.g., `2025-07-30`)           |
+| `last_watered`       | Last watered date (e.g., `2026-07-30`)           |
 | `last_fertilized`    | Last fertilized date (optional)                  |
 | `watering_interval`  | Days between waterings (default: `14`)           |
 | `watering_postponed` | Extra days to postpone watering (default: `0`)   |
+| `days_since_watered` | Days since `last_watered` (updated at midnight)  |
 | `inside`             | Whether the plant is indoors (`true` or `false`) |
-| `image`              | Custom image path or entity picture (optional)   |
+| `image`              | Image URL or path for the card (optional)        |
+
+When you call **Create Plant** / **Update Plant**, use the field names above; they are stored on the sensor as these attributes.
+
+## Plant images
+
+You can use your own photo (camera upload, image editor export, or a file downloaded from the web) and place it anywhere Home Assistant can serve under `/config/www/`.
+
+**Recommended layout:** keep Plant Diary files under `/config/www/plant_diary/` so uninstalling or backing up is straightforward. Home Assistant also provides a generic `/config/www/images/` folder; that works, but a **`plant_diary`-specific folder** (or `plant_diary/images/`) keeps plant photos grouped with this integration.
+
+Examples:
+
+- File on disk: `/config/www/plant_diary/Monstera.jpg` → URL for the `image` field: `/local/plant_diary/Monstera.jpg`
+- File on disk: `/config/www/plant_diary/images/Monstera.jpg` → URL: `/local/plant_diary/images/Monstera.jpg`
+
+Match the file name to how you reference the plant (e.g. **Monstera**) so it is easy to find. After adding or changing a file, set or update the `image` attribute via **Plant Diary: Update Plant** (or set it when creating the plant) to that `/local/...` URL.
 
 # Logbook Integration
 

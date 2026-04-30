@@ -42,6 +42,13 @@ update_plant:
           max: 100
           mode: slider
           step: 1
+    image:
+      name: Image
+      description: URL served from /config/www (e.g. /local/plant_diary/Monstera.jpg)
+      required: false
+      example: "/local/plant_diary/Monstera.jpg"
+      selector:
+        text:
 create_plant:
   name: Create Plant
   description: Create a plant
@@ -86,6 +93,13 @@ create_plant:
           max: 100
           mode: slider
           step: 1
+    image:
+      name: Image
+      description: URL served from /config/www (e.g. /local/plant_diary/Monstera.jpg)
+      required: false
+      example: "/local/plant_diary/Monstera.jpg"
+      selector:
+        text:
 update_days_since_watered:
   name: Update Days Since Watered
   description: Update the days since the plant was watered
