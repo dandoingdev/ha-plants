@@ -8,9 +8,12 @@ This work has been inspired by [Plant tracker for Home Assistant](https://github
 
 - Track multiple plants with individual settings
 - Custom watering intervals and postponements
+- Optional **fertilizing intervals** (days between fertilizing; `0` turns off fertilizing reminders)
+- **Reminder notifications** for watering and fertilizing: daily check at a time you choose, optional mobile/desktop notify entity, and optional persistent notifications in Home Assistant
 - Indoor/outdoor plant designation
-- Automatic daily updates for watering days
+- Automatic daily updates for days since watering and fertilizing
 - Logbook integration for activity tracking
+- Manage plants and reminders from the integration **Configure** UI, or use **Developer tools → Actions** (`plant_diary.*` services)
 
 # Installation
 
@@ -71,7 +74,26 @@ HA Plants is set up only through the Home Assistant UI: do not add a `plant_diar
 
 1. Go to **Settings > Devices & Services > Add integration**.
 2. Search for **HA Plants** and add it.
-3. Open **HA Plants** on the integration card, then **Configure** to set **reminder notifications** or to **add, edit, or delete plants** (you can still use the **HA Plants** actions under **Developer tools > Actions** if you prefer).
+3. Open **HA Plants** on the integration card, then **Configure** to open the menu: **Reminder notifications**, **Add plant**, **Edit plant**, or **Delete plant**. You can also use the **`plant_diary`** actions under **Developer tools → Actions** (for example **HA Plants: Create Plant**).
+
+### Reminder notifications
+
+Reminders run **once per day** at the **reminder time** you set (Home Assistant’s local time). They only run when **Enable reminder notifications** is turned on.
+
+| Setting | What it does |
+| ------- | -------------- |
+| **Enable reminder notifications** | Master switch; when off, no reminders are sent. |
+| **Reminder time** | Hour and minute for the daily reminder pass (default 09:00). |
+| **Notify entity (optional)** | A `notify.*` entity. If set, Home Assistant sends a notification with title **HA Plants** and a short message (see below) using the notify integration’s **`send_message`** action. Leave empty to skip push/mobile notify and only use persistent notifications (if enabled). |
+| **Also show persistent notification** | When enabled (default), creates a **persistent_notification** in the UI so reminders stay visible until dismissed. |
+
+Reminder messages use the title **HA Plants** and body text like `Monstera needs watering.` or `Monstera needs fertilizing.` (your plant’s display name is substituted).
+
+**When a watering reminder is sent:** the plant is considered due when the sensor’s care state is **overdue**—that is, `days_since_watered` is at or past `watering_interval + watering_postponed`, or **last watered** is unknown (`Unknown` / never set), which matches the same logic the Plant Diary card uses for the lowest care state.
+
+**When a fertilizing reminder is sent:** you must set **`fertilizing_interval`** to a value greater than `0`, set **`last_fertilized`** to a known date, and **`days_since_fertilized`** must be greater than or equal to that interval. Each plant can get at most **one watering** and **one fertilizing** reminder **per calendar day** (tracked so repeats do not spam if the scheduler fires again).
+
+After changing reminder options, the integration reloads and re-schedules the daily job automatically.
 
 ### Plant Diary Card
 
@@ -86,18 +108,22 @@ HA Plants creates **one sensor entity per plant**. The entity id follows the pat
 
 Each sensor’s **state** is a numeric care indicator (0–3) used by the integration and the Plant Diary card. The fields below are exposed as **sensor attributes** (and are what you usually show in automations, templates, and the card):
 
-| Attribute            | Description                                      |
-| -------------------- | ------------------------------------------------ |
-| `plant_name`         | Name of the plant                                |
-| `last_watered`       | Last watered date (e.g., `2026-07-30`)           |
-| `last_fertilized`    | Last fertilized date (optional)                  |
-| `watering_interval`  | Days between waterings (default: `14`)           |
-| `watering_postponed` | Extra days to postpone watering (default: `0`)   |
-| `days_since_watered` | Days since `last_watered` (updated at midnight)  |
-| `inside`             | Whether the plant is indoors (`true` or `false`) |
-| `image`              | Image URL or path for the card (optional)        |
+| Attribute                 | Description                                                         |
+| ------------------------- | ------------------------------------------------------------------- |
+| `plant_name`              | Name of the plant                                                   |
+| `last_watered`            | Last watered date (e.g., `2026-07-30`) or `Unknown`                |
+| `last_fertilized`         | Last fertilized date or `Unknown`                                   |
+| `watering_interval`       | Days between waterings (default: `14`)                              |
+| `watering_postponed`      | Extra days to postpone watering (default: `0`)                    |
+| `fertilizing_interval`    | Days between fertilizing (`0` = off; no fertilizing reminders)      |
+| `days_since_watered`      | Days since `last_watered` (updated at midnight)                   |
+| `days_since_fertilized`   | Days since `last_fertilized` when a date is known; otherwise `0`    |
+| `inside`                  | Whether the plant is indoors (`true` or `false`)                  |
+| `image`                   | Image URL or path for the card (optional)                           |
 
-When you call **Create Plant** / **Update Plant**, use the field names above; they are stored on the sensor as these attributes.
+When you call **Create Plant** / **Update Plant**, use the field names above; they are stored on the sensor as these attributes. Both actions accept **`fertilizing_interval`** (0–365 days).
+
+**Services:** `plant_diary.create_plant`, `plant_diary.update_plant`, `plant_diary.delete_plant`, and `plant_diary.update_days_since_watered` (refreshes day counters for all plants; a midnight schedule also runs this automatically).
 
 ## Plant images
 
@@ -136,10 +162,11 @@ Please include logs or reproduction steps when reporting bugs.
 Planned features and improvements for future versions:
 
 - ✅ Create, update, and delete plant entries
-- ✅ Daily tracking of days since watering
+- ✅ Daily tracking of days since watering and fertilizing
+- ✅ Fertilizing intervals and reminders
 - ✅ Lovelace card for visualizing plant data
 - ✅ Logbook integration
-- 🔜 Reminder notifications for watering and fertilizing
+- ✅ Reminder notifications for watering and fertilizing (daily, optional notify + persistent)
 - 🔜 Integration with moisture/humidity sensors
 - 🔜 Multi-language support
 
