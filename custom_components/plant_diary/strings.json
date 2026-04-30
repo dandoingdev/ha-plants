@@ -1,0 +1,26 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Plant Diary",
+        "description": "Set up plant watering and fertilizing tracking."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Only one Plant Diary instance is allowed."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Plant Diary reminders",
+        "data": {
+          "reminders_enabled": "Enable reminder notifications",
+          "reminder_time": "Reminder time",
+          "notify_entity_id": "Notify entity (optional)",
+          "reminder_persistent": "Also show persistent notification in Home Assistant"
+        }
+      }
+    }
+  }
+}

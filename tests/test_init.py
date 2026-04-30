@@ -68,6 +68,10 @@ async def test_flow_user_init(hass) -> None:
             "homeassistant.loader.async_get_integrations",
             return_value={config_flow.DOMAIN: mock_integration},
         ),
+        mock.patch(
+            "custom_components.plant_diary.PlantDiaryManager.async_track_time_change",
+            return_value=mock.Mock(),
+        ),
     ):
         result = await hass.config_entries.flow.async_init(
             config_flow.DOMAIN, context={"source": "user"}

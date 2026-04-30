@@ -1,6 +1,7 @@
 # Test for PlantDiaryManager
+from datetime import date, timedelta
 from typing import Iterable
-from unittest.mock import ANY, AsyncMock, MagicMock, patch, Mock
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 import asyncio
@@ -11,7 +12,13 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.util.hass_dict import HassKey
 from homeassistant.helpers.entity_values import EntityValues
 
-from custom_components.plant_diary.const import DOMAIN
+from custom_components.plant_diary.const import (
+    CONF_NOTIFY_ENTITY_ID,
+    CONF_REMINDERS_ENABLED,
+    CONF_REMINDER_PERSISTENT,
+    DOMAIN,
+    OPTION_REMINDER_LAST_SENT,
+)
 from custom_components.plant_diary.PlantDiaryManager import PlantDiaryManager
 
 DATA_CUSTOMIZE: HassKey[EntityValues] = HassKey("hass_customize")
@@ -45,7 +52,11 @@ def create_test_hass():
     hass.services = MagicMock()
     hass.services.async_register = async_register
     hass.services.async_call = async_call
-    hass.services.has_service = lambda d, s: s in registered_services.get(d, {})
+    hass.services.has_service = lambda d, s: s in registered_services.get(
+        d, {}
+    ) or (d == "notify" and s == "send_message") or (
+        d == "persistent_notification" and s == "create"
+    )
 
     def async_create_task(coro, *args, **kwargs):
         task = asyncio.create_task(coro)
@@ -67,6 +78,8 @@ def create_test_hass():
                 hass.async_create_task(entity.async_added_to_hass())
 
     hass.async_add_entities = add_entities
+    hass.config_entries = MagicMock()
+    hass.config_entries.async_update_entry = MagicMock()
 
     return hass
 
@@ -95,6 +108,7 @@ async def test_plantdiarymanager_async_init(mock_async_track_time_change) -> Non
     hass.services.async_register = MagicMock()
 
     entry = MagicMock(spec=ConfigEntry)
+    entry.options = {}
 
     manager = PlantDiaryManager(hass, entry)
     await manager.async_init()
@@ -122,12 +136,20 @@ async def test_plantdiarymanager_async_init(mock_async_track_time_change) -> Non
         ANY,
     )
     assert manager._midnight_listener is not None
-    mock_async_track_time_change.assert_called_once_with(
+    assert mock_async_track_time_change.call_count == 2
+    mock_async_track_time_change.assert_any_call(
         hass,
         manager.async_update_all_days_since_last_watered,
         hour=0,
         minute=0,
         second=1,
+    )
+    mock_async_track_time_change.assert_any_call(
+        hass,
+        manager.async_maybe_send_reminders,
+        hour=9,
+        minute=0,
+        second=0,
     )
 
     assert manager._midnight_listener == mock_async_track_time_change.return_value
@@ -139,7 +161,9 @@ async def test_service_handlers_register_and_call(_mock_async_track_time_change)
     """Test registering and calling service handlers."""
 
     hass = create_test_hass()
-    manager = PlantDiaryManager(hass, MagicMock())
+    entry = MagicMock(spec=ConfigEntry)
+    entry.options = {}
+    manager = PlantDiaryManager(hass, entry)
 
     # Patch the methods that the services would call
     manager.create_plant = AsyncMock()
@@ -389,5 +413,151 @@ async def test_plantdiarymanager_async_unload(mock_er_async_get) -> None:
     # Mock the unload method
     await manager.async_unload()
     assert manager._midnight_listener is None
+    assert manager._reminder_listener is None
     assert manager._async_add_entities is None
     assert len(manager.entities) == 0
+
+
+def _persist_entry_options(entry: MagicMock, **kwargs):
+    """Simulate config_entries.async_update_entry updating options."""
+    opts = kwargs.get("options")
+    if opts is not None:
+        entry.options = dict(opts)
+
+
+@pytest.mark.asyncio
+async def test_async_maybe_send_reminders_water_due() -> None:
+    """Reminders send once per day when watering is due."""
+    hass = create_test_hass()
+    calls: list[tuple[str, str, dict]] = []
+
+    async def track_call(domain, service, data, blocking=False, context=None):
+        calls.append((domain, service, data))
+
+    hass.services.async_call = track_call
+
+    overdue = (date.today() - timedelta(days=10)).isoformat()
+    entry = MagicMock(spec=ConfigEntry)
+    entry.data = {
+        "plants": {
+            "Aloe": {
+                "plant_name": "Aloe",
+                "last_watered": overdue,
+                "last_fertilized": "Unknown",
+                "watering_interval": 3,
+                "watering_postponed": 0,
+                "fertilizing_interval": 0,
+                "days_since_watered": 99,
+                "inside": True,
+                "image": "",
+            }
+        }
+    }
+    entry.options = {
+        CONF_REMINDERS_ENABLED: True,
+        CONF_NOTIFY_ENTITY_ID: "",
+        CONF_REMINDER_PERSISTENT: True,
+        OPTION_REMINDER_LAST_SENT: {},
+    }
+    hass.config_entries.async_update_entry = MagicMock(
+        side_effect=lambda e, **kw: _persist_entry_options(e, **kw)
+    )
+
+    manager = PlantDiaryManager(hass, entry)
+    await manager.restore_and_add_entities(hass.async_add_entities)
+    await manager.async_maybe_send_reminders()
+
+    assert any(c[0] == "persistent_notification" for c in calls)
+    hass.config_entries.async_update_entry.assert_called_once()
+
+    calls.clear()
+    await manager.async_maybe_send_reminders()
+    assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_async_maybe_send_reminders_fertilizing_due() -> None:
+    """Fertilizing reminder when interval exceeded."""
+    hass = create_test_hass()
+    calls: list[tuple[str, str, dict]] = []
+
+    async def track_call(domain, service, data, blocking=False, context=None):
+        calls.append((domain, service, data))
+
+    hass.services.async_call = track_call
+
+    entry = MagicMock(spec=ConfigEntry)
+    entry.data = {
+        "plants": {
+            "Fern": {
+                "plant_name": "Fern",
+                "last_watered": date.today().isoformat(),
+                "last_fertilized": (date.today() - timedelta(days=35)).isoformat(),
+                "watering_interval": 14,
+                "watering_postponed": 0,
+                "fertilizing_interval": 30,
+                "days_since_watered": 0,
+                "inside": True,
+                "image": "",
+            }
+        }
+    }
+    entry.options = {
+        CONF_REMINDERS_ENABLED: True,
+        CONF_NOTIFY_ENTITY_ID: "",
+        CONF_REMINDER_PERSISTENT: True,
+        OPTION_REMINDER_LAST_SENT: {},
+    }
+    hass.config_entries.async_update_entry = MagicMock(
+        side_effect=lambda e, **kw: _persist_entry_options(e, **kw)
+    )
+
+    manager = PlantDiaryManager(hass, entry)
+    await manager.restore_and_add_entities(hass.async_add_entities)
+    await manager.async_maybe_send_reminders()
+
+    assert any(
+        c[0] == "persistent_notification" and "fertilizing" in c[2].get("message", "")
+        for c in calls
+    )
+
+
+@pytest.mark.asyncio
+async def test_async_maybe_send_reminders_disabled() -> None:
+    """No notifications when reminders are disabled."""
+    hass = create_test_hass()
+    calls: list[tuple[str, str, dict]] = []
+
+    async def track_call(domain, service, data, blocking=False, context=None):
+        calls.append((domain, service, data))
+
+    hass.services.async_call = track_call
+
+    overdue = (date.today() - timedelta(days=10)).isoformat()
+    entry = MagicMock(spec=ConfigEntry)
+    entry.data = {
+        "plants": {
+            "Aloe": {
+                "plant_name": "Aloe",
+                "last_watered": overdue,
+                "last_fertilized": "Unknown",
+                "watering_interval": 3,
+                "watering_postponed": 0,
+                "fertilizing_interval": 0,
+                "days_since_watered": 99,
+                "inside": True,
+                "image": "",
+            }
+        }
+    }
+    entry.options = {
+        CONF_REMINDERS_ENABLED: False,
+        CONF_REMINDER_PERSISTENT: True,
+        OPTION_REMINDER_LAST_SENT: {},
+    }
+
+    manager = PlantDiaryManager(hass, entry)
+    await manager.restore_and_add_entities(hass.async_add_entities)
+    await manager.async_maybe_send_reminders()
+
+    assert calls == []

@@ -42,6 +42,16 @@ update_plant:
           max: 100
           mode: slider
           step: 1
+    fertilizing_interval:
+      name: Fertilizing Interval
+      description: Days between fertilizing (0 disables fertilizing reminders)
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 365
+          mode: slider
+          step: 1
     image:
       name: Image
       description: URL served from /config/www (e.g. /local/plant_diary/Monstera.jpg)
@@ -91,6 +101,16 @@ create_plant:
         number:
           min: 0
           max: 100
+          mode: slider
+          step: 1
+    fertilizing_interval:
+      name: Fertilizing Interval
+      description: Days between fertilizing (0 disables fertilizing reminders)
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 365
           mode: slider
           step: 1
     image:

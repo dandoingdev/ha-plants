@@ -135,6 +135,8 @@ async def test_plantdiaryentity_attributes() -> None:
     assert attributes["watering_interval"] == 14
     assert attributes["watering_postponed"] == 0
     assert attributes["days_since_watered"] == 1
+    assert attributes["days_since_fertilized"] == 1
+    assert attributes["fertilizing_interval"] == 0
     assert attributes["inside"] is True
     assert attributes["image"] == ""
 
@@ -270,3 +272,47 @@ def test_plantdiaryentity_parse_int() -> None:
     assert entity._parse_int(False) == 0  # Boolean input should return 0
     assert entity._parse_int([]) == 0  # List input should return 0
     assert entity._parse_int({}) == 0  # Dict input should return 0
+
+
+def test_fertilizing_reminder_due() -> None:
+    """Fertilizing reminder respects interval and last_fertilized."""
+    entity = PlantDiaryEntity(
+        "p",
+        {
+            "plant_name": "P",
+            "last_watered": date.today().isoformat(),
+            "last_fertilized": (date.today() - timedelta(days=40)).isoformat(),
+            "watering_interval": 14,
+            "watering_postponed": 0,
+            "fertilizing_interval": 30,
+            "inside": True,
+        },
+    )
+    assert entity.fertilizing_reminder_due() is True
+    assert entity.watering_reminder_due() is False
+
+    entity2 = PlantDiaryEntity(
+        "q",
+        {
+            "plant_name": "Q",
+            "last_watered": date.today().isoformat(),
+            "last_fertilized": "Unknown",
+            "watering_interval": 14,
+            "fertilizing_interval": 30,
+            "inside": True,
+        },
+    )
+    assert entity2.fertilizing_reminder_due() is False
+
+    entity3 = PlantDiaryEntity(
+        "r",
+        {
+            "plant_name": "R",
+            "last_watered": date.today().isoformat(),
+            "last_fertilized": (date.today() - timedelta(days=10)).isoformat(),
+            "watering_interval": 14,
+            "fertilizing_interval": 0,
+            "inside": True,
+        },
+    )
+    assert entity3.fertilizing_reminder_due() is False

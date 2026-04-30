@@ -2,6 +2,9 @@
 
 import logging
 from datetime import datetime
+from typing import Any
+
+from homeassistant.util.dt import now as dt_now
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.logbook import async_log_entry, log_entry
@@ -10,7 +13,17 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_change
 
-from .const import DOMAIN
+from .const import (
+    CONF_NOTIFY_ENTITY_ID,
+    CONF_REMINDER_HOUR,
+    CONF_REMINDER_MINUTE,
+    CONF_REMINDER_PERSISTENT,
+    CONF_REMINDERS_ENABLED,
+    DEFAULT_REMINDER_HOUR,
+    DEFAULT_REMINDER_MINUTE,
+    DOMAIN,
+    OPTION_REMINDER_LAST_SENT,
+)
 from .PlantDiaryEntity import PlantDiaryEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,6 +39,7 @@ class PlantDiaryManager:
         self.entities = {}
         self._async_add_entities = None
         self._midnight_listener = None
+        self._reminder_listener = None
 
     async def async_init(self):
         """Initialize the PlantDiaryManager by registering services."""
@@ -69,6 +83,26 @@ class PlantDiaryManager:
             second=1,
         )
 
+        self._register_reminder_listener()
+
+    def _register_reminder_listener(self) -> None:
+        """Schedule daily reminders at the configured local time."""
+        if self._reminder_listener is not None:
+            self._reminder_listener()
+            self._reminder_listener = None
+
+        opts: dict[str, Any] = dict(self.entry.options)
+        hour = int(opts.get(CONF_REMINDER_HOUR, DEFAULT_REMINDER_HOUR))
+        minute = int(opts.get(CONF_REMINDER_MINUTE, DEFAULT_REMINDER_MINUTE))
+
+        self._reminder_listener = async_track_time_change(
+            self.hass,
+            self.async_maybe_send_reminders,
+            hour=hour,
+            minute=minute,
+            second=0,
+        )
+
     async def create_plant(self, data: dict):
         """Create a new PlantDiaryEntity and add it."""
         plant_id = data["plant_name"]
@@ -78,6 +112,7 @@ class PlantDiaryManager:
             "last_fertilized": data.get("last_fertilized", "Unknown"),
             "watering_interval": data.get("watering_interval", 14),
             "watering_postponed": data.get("watering_postponed", 0),
+            "fertilizing_interval": data.get("fertilizing_interval", 0),
             "inside": data.get("inside", True),
             "image": data.get("image", plant_id),
         }
@@ -206,6 +241,106 @@ class PlantDiaryManager:
             entity_id=None,  # No specific entity ID for this log entry
         )
 
+    async def async_maybe_send_reminders(self, _now: datetime | None = None) -> None:
+        """Send watering/fertilizing reminders if enabled and due."""
+        if not self.entry.options.get(CONF_REMINDERS_ENABLED):
+            return
+
+        today = dt_now().date().isoformat()
+        opts: dict[str, Any] = dict(self.entry.options)
+        last_sent: dict[str, str] = dict(opts.get(OPTION_REMINDER_LAST_SENT, {}))
+
+        plant_ids = set(self.entities.keys())
+        pruned_last: dict[str, str] = {}
+        for key, value in last_sent.items():
+            parts = key.split("|", 1)
+            if parts and parts[0] in plant_ids:
+                pruned_last[key] = value
+        last_sent = pruned_last
+
+        notify_entity = (opts.get(CONF_NOTIFY_ENTITY_ID) or "").strip()
+        want_persistent = bool(opts.get(CONF_REMINDER_PERSISTENT, True))
+
+        updated = False
+        for plant_id, entity in self.entities.items():
+            entity.update_days_since_last_watered()
+
+            if entity.watering_reminder_due():
+                key = f"{plant_id}|water"
+                if last_sent.get(key) != today:
+                    await self._async_send_reminder(
+                        plant_id=plant_id,
+                        plant_name=entity._plant_name,
+                        kind="water",
+                        notify_entity_id=notify_entity,
+                        persistent=want_persistent,
+                    )
+                    last_sent[key] = today
+                    updated = True
+
+            if entity.fertilizing_reminder_due():
+                key = f"{plant_id}|fert"
+                if last_sent.get(key) != today:
+                    await self._async_send_reminder(
+                        plant_id=plant_id,
+                        plant_name=entity._plant_name,
+                        kind="fert",
+                        notify_entity_id=notify_entity,
+                        persistent=want_persistent,
+                    )
+                    last_sent[key] = today
+                    updated = True
+
+        if updated:
+            new_opts = {**opts, OPTION_REMINDER_LAST_SENT: last_sent}
+            self.hass.config_entries.async_update_entry(self.entry, options=new_opts)
+
+    async def _async_send_reminder(
+        self,
+        *,
+        plant_id: str,
+        plant_name: str,
+        kind: str,
+        notify_entity_id: str,
+        persistent: bool,
+    ) -> None:
+        """Deliver one reminder via notify and/or persistent_notification."""
+        if kind == "water":
+            title = "Plant Diary"
+            message = f"{plant_name} needs watering."
+        else:
+            title = "Plant Diary"
+            message = f"{plant_name} needs fertilizing."
+
+        safe_id = plant_id.replace(" ", "_")
+        notification_id = f"plant_diary_reminder_{safe_id}_{kind}"
+
+        if notify_entity_id and self.hass.services.has_service("notify", "send_message"):
+            await self.hass.services.async_call(
+                "notify",
+                "send_message",
+                {
+                    "entity_id": notify_entity_id,
+                    "title": title,
+                    "message": message,
+                },
+                blocking=False,
+            )
+
+        if persistent and self.hass.services.has_service(
+            "persistent_notification", "create"
+        ):
+            await self.hass.services.async_call(
+                "persistent_notification",
+                "create",
+                {
+                    "title": title,
+                    "message": message,
+                    "notification_id": notification_id,
+                },
+                blocking=False,
+            )
+
     async def async_unload(self):
         """Unload the manager and remove all entities."""
 
@@ -216,6 +351,10 @@ class PlantDiaryManager:
         if self._midnight_listener:
             self._midnight_listener()
             self._midnight_listener = None
+
+        if self._reminder_listener:
+            self._reminder_listener()
+            self._reminder_listener = None
 
         if self._async_add_entities:
             self._async_add_entities = None

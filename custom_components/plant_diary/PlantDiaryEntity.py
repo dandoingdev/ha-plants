@@ -24,7 +24,9 @@ class PlantDiaryEntity(SensorEntity):
         self._last_fertilized: date | None = None
         self._watering_interval: int = 14
         self._watering_postponed: int = 0
+        self._fertilizing_interval: int = 0
         self._days_since_watered: int = 0
+        self._days_since_fertilized: int = 0
         self._inside: bool = True
         self._image: str = ""
         self._state: int = 0
@@ -67,6 +69,10 @@ class PlantDiaryEntity(SensorEntity):
             self._watering_interval: int = self._parse_int(data["watering_interval"])
         if "watering_postponed" in data:
             self._watering_postponed: int = self._parse_int(data["watering_postponed"])
+        if "fertilizing_interval" in data:
+            self._fertilizing_interval: int = self._parse_int(
+                data["fertilizing_interval"]
+            )
         if "inside" in data:
             self._inside = bool(data["inside"])
         if "plant_name" in data:
@@ -87,7 +93,9 @@ class PlantDiaryEntity(SensorEntity):
             else "Unknown",
             "watering_interval": self._watering_interval,
             "watering_postponed": self._watering_postponed,
+            "fertilizing_interval": self._fertilizing_interval,
             "days_since_watered": self._days_since_watered,
+            "days_since_fertilized": self._days_since_fertilized,
             "inside": self._inside,
             "image": self._image,
         }
@@ -116,8 +124,25 @@ class PlantDiaryEntity(SensorEntity):
             else:
                 self._state = 0
 
+        if self._last_fertilized is None:
+            self._days_since_fertilized = 0
+        else:
+            self._days_since_fertilized = (
+                now().date() - self._last_fertilized
+            ).days
+
         # Clear cached native_value
         self.__dict__.pop("native_value", None)
+
+    def watering_reminder_due(self) -> bool:
+        """Return True when watering should be reminded (overdue / unknown)."""
+        return self._state == 0
+
+    def fertilizing_reminder_due(self) -> bool:
+        """Return True when fertilizing interval is set and overdue."""
+        if self._fertilizing_interval <= 0 or self._last_fertilized is None:
+            return False
+        return self._days_since_fertilized >= self._fertilizing_interval
 
     def _parse_date(self, value: Any) -> date | None:
         """Parse a date from various formats."""
