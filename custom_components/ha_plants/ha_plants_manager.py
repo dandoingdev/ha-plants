@@ -318,10 +318,10 @@ class HAPlantsManager:
         self.entities[plant_id] = entity
 
         if self._async_add_entities:
-            self._async_add_entities([entity])
-
-        # Force update the entity state
-        await entity.async_update_ha_state(True)
+            # update_before_add runs async_device_update during platform add, after hass is bound.
+            # Do not call async_update_ha_state here: async_add_entities only schedules work and
+            # returns immediately, so the entity would not be ready yet.
+            self._async_add_entities([entity], True)
 
         # Store in the config entry if applicable
         if save_to_config:

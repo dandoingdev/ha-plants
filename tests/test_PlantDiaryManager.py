@@ -325,6 +325,7 @@ async def test_plantdiarymanager_delete_plant(mock_er_async_get) -> None:
             }
         }
     }
+    entry.options = {}
     manager = HAPlantsManager(hass, entry)
     await manager.restore_and_add_entities(hass.async_add_entities)
 
@@ -398,6 +399,7 @@ async def test_plantdiarymanager_async_unload(mock_er_async_get) -> None:
             }
         }
     }
+    entry.options = {}
     manager = HAPlantsManager(hass, entry)
     await manager.restore_and_add_entities(hass.async_add_entities)
 
