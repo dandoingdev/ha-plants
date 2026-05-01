@@ -1,66 +1,5 @@
-update_plant:
-  name: Update Plant
-  description: Update the plant
-  fields:
-    plant_id:
-      name: Plant ID
-      description: The id of the plant to update
-      required: true
-      example: "My Plant"
-      selector:
-        text:
-    last_watered:
-      name: Last Watered
-      description: Last time the plant was watered
-      required: false
-      selector:
-        datetime: {}
-    last_fertilized:
-      name: Last Fertilized
-      description: Last time the plant was fertilized
-      required: false
-      selector:
-        datetime: {}
-    watering_interval:
-      name: Watering Interval
-      description: The interval between watering
-      required: false
-      example: 3
-      selector:
-        number:
-          min: 1
-          max: 100
-          mode: slider
-          step: 1
-    watering_postponed:
-      name: Watering Postponed
-      description: The time the watering was postponed
-      required: false
-      selector:
-        number:
-          min: 0
-          max: 100
-          mode: slider
-          step: 1
-    fertilizing_interval:
-      name: Fertilizing Interval
-      description: Days between fertilizing (0 disables fertilizing reminders)
-      required: false
-      selector:
-        number:
-          min: 0
-          max: 365
-          mode: slider
-          step: 1
-    image:
-      name: Image
-      description: URL served from /config/www (e.g. /local/plant_diary/Monstera.jpg)
-      required: false
-      example: "/local/plant_diary/Monstera.jpg"
-      selector:
-        text:
 create_plant:
-  name: Create Plant
+  name: Create plant
   description: Create a plant
   fields:
     plant_name:
@@ -71,19 +10,19 @@ create_plant:
       selector:
         text:
     last_watered:
-      name: Last Watered
+      name: Last watered
       description: Last time the plant was watered
       required: false
       selector:
         datetime: {}
     last_fertilized:
-      name: Last Fertilized
+      name: Last fertilized
       description: Last time the plant was fertilized
       required: false
       selector:
         datetime: {}
     watering_interval:
-      name: Watering Interval
+      name: Watering interval
       description: The interval between watering
       required: false
       example: 3
@@ -94,7 +33,7 @@ create_plant:
           mode: slider
           step: 1
     watering_postponed:
-      name: Watering Postponed
+      name: Watering postponed
       description: The time the watering was postponed
       required: false
       selector:
@@ -104,7 +43,7 @@ create_plant:
           mode: slider
           step: 1
     fertilizing_interval:
-      name: Fertilizing Interval
+      name: Fertilizing interval
       description: Days between fertilizing (0 disables fertilizing reminders)
       required: false
       selector:
@@ -120,11 +59,69 @@ create_plant:
       example: "/local/plant_diary/Monstera.jpg"
       selector:
         text:
-update_days_since_watered:
-  name: Update Days Since Watered
-  description: Update the days since the plant was watered
+update_plant:
+  name: Update plant
+  description: Update the plant
+  fields:
+    plant_id:
+      name: Plant ID
+      description: The id of the plant to update
+      required: true
+      example: "My Plant"
+      selector:
+        text:
+    last_watered:
+      name: Last watered
+      description: Last time the plant was watered
+      required: false
+      selector:
+        datetime: {}
+    last_fertilized:
+      name: Last fertilized
+      description: Last time the plant was fertilized
+      required: false
+      selector:
+        datetime: {}
+    watering_interval:
+      name: Watering interval
+      description: The interval between watering
+      required: false
+      example: 3
+      selector:
+        number:
+          min: 1
+          max: 100
+          mode: slider
+          step: 1
+    watering_postponed:
+      name: Watering postponed
+      description: The time the watering was postponed
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider
+          step: 1
+    fertilizing_interval:
+      name: Fertilizing interval
+      description: Days between fertilizing (0 disables fertilizing reminders)
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 365
+          mode: slider
+          step: 1
+    image:
+      name: Image
+      description: URL served from /config/www (e.g. /local/plant_diary/Monstera.jpg)
+      required: false
+      example: "/local/plant_diary/Monstera.jpg"
+      selector:
+        text:
 delete_plant:
-  name: Delete Plant
+  name: Delete plant
   description: Delete the plant
   fields:
     plant_id:
@@ -162,60 +159,9 @@ log_watered_by_tag:
       example: "04:AB:12:..."
       selector:
         text:
-attach_rf_tag:
-  name: Link tag to plant
-  description: Map a tag id to a plant for log_watered_by_tag
-  fields:
-    tag_id:
-      name: Tag id
-      description: Tag uid as reported when scanned
-      required: true
-      selector:
-        text:
-    plant_id:
-      name: Plant ID
-      description: Plant to update when this tag is scanned
-      required: true
-      selector:
-        text:
-remove_rf_tag:
-  name: Remove tag link
-  description: Remove a tag id to plant mapping
-  fields:
-    tag_id:
-      name: Tag id
-      description: Previously linked tag id
-      required: true
-      selector:
-        text:
-log_watered:
-  name: Log watered
-  description: Record that a plant was watered (defaults to today).
-  fields:
-    plant_id:
-      name: Plant ID
-      description: Plant id (the name/key used when the plant was created)
-      required: true
-      example: "Monstera"
-      selector:
-        text:
-    last_watered:
-      name: Last watered
-      description: Optional date/time to store (defaults to today)
-      required: false
-      selector:
-        datetime: {}
-log_watered_by_tag:
-  name: Log watered by tag
-  description: Mark the plant linked to this tag id as watered. Configure links via integration options or attach_rf_tag.
-  fields:
-    tag_id:
-      name: Tag id
-      description: RF/NFC tag identifier from your scanner or Tag integration
-      required: true
-      example: "04:AB:12:..."
-      selector:
-        text:
+update_days_since_watered:
+  name: Refresh watering counters
+  description: Recalculate days_since_watered and days_since_fertilized for every plant. Runs automatically at midnight; call manually to refresh on demand.
 attach_rf_tag:
   name: Link tag to plant
   description: Map a tag id to a plant for log_watered_by_tag

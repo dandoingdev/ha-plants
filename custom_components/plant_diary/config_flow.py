@@ -25,10 +25,25 @@ from .PlantDiaryManager import PlantDiaryManager
 # Dict labels display even if backend translations are not yet cached (list menus rely on i18n only).
 OPTIONS_MENU_INIT: dict[str, str] = {
     "reminder_settings": "Reminder notifications",
+    "manage_plants": "Manage plants",
+    "manage_tags": "Manage RF/NFC tags",
+}
+
+OPTIONS_MENU_MANAGE_PLANTS_ADD_ONLY: dict[str, str] = {
+    "add_plant": "Add plant",
+}
+
+OPTIONS_MENU_MANAGE_PLANTS_FULL: dict[str, str] = {
     "add_plant": "Add plant",
     "edit_plant": "Edit plant",
-    "delete_plant": "Delete plant",
-    "attach_rf_tag": "Link RF/NFC tag to plant",
+}
+
+OPTIONS_MENU_MANAGE_TAGS_ATTACH_ONLY: dict[str, str] = {
+    "attach_rf_tag": "Link tag to plant",
+}
+
+OPTIONS_MENU_MANAGE_TAGS_FULL: dict[str, str] = {
+    "attach_rf_tag": "Link tag to plant",
     "remove_rf_tag": "Remove tag link",
 }
 
@@ -132,6 +147,31 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
             menu_options=OPTIONS_MENU_INIT,
         )
 
+    async def async_step_manage_plants(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Sub-menu for plants; hides edit when no plants exist."""
+        plants = _plants_dict(self.config_entry)
+        menu = (
+            OPTIONS_MENU_MANAGE_PLANTS_FULL
+            if plants
+            else OPTIONS_MENU_MANAGE_PLANTS_ADD_ONLY
+        )
+        return self.async_show_menu(step_id="manage_plants", menu_options=menu)
+
+    async def async_step_manage_tags(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Sub-menu for RF/NFC tag links; hides remove when no links exist."""
+        if not _plants_dict(self.config_entry):
+            return self.async_abort(reason="no_plants")
+        menu = (
+            OPTIONS_MENU_MANAGE_TAGS_FULL
+            if _rf_tag_map(self.config_entry)
+            else OPTIONS_MENU_MANAGE_TAGS_ATTACH_ONLY
+        )
+        return self.async_show_menu(step_id="manage_tags", menu_options=menu)
+
     async def async_step_reminder_settings(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
@@ -217,51 +257,74 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
             )
             return self._finish_options_unchanged()
 
-        return self.async_show_form(step_id="add_plant", data_schema=self._add_plant_schema())
+        return self.async_show_form(
+            step_id="add_plant", data_schema=self._add_plant_schema()
+        )
+
+    @staticmethod
+    def _plant_form_fields(defaults: dict[str, Any]) -> dict[Any, Any]:
+        d = defaults
+        return {
+            vol.Required("plant_name", default=d.get("plant_name", "")): str,
+            vol.Optional("last_watered"): selector.DateSelector(),
+            vol.Optional("last_fertilized"): selector.DateSelector(),
+            vol.Optional(
+                "watering_interval",
+                default=int(d.get("watering_interval", 14)),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=1, max=100, step=1, mode=selector.NumberSelectorMode.SLIDER
+                )
+            ),
+            vol.Optional(
+                "watering_postponed",
+                default=int(d.get("watering_postponed", 0)),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=0, max=100, step=1, mode=selector.NumberSelectorMode.SLIDER
+                )
+            ),
+            vol.Optional(
+                "fertilizing_interval",
+                default=int(d.get("fertilizing_interval", 0)),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=0, max=365, step=1, mode=selector.NumberSelectorMode.SLIDER
+                )
+            ),
+            vol.Optional("inside", default=bool(d.get("inside", True))): selector.BooleanSelector(),
+            vol.Optional("image", default=d.get("image", "")): selector.TextSelector(),
+        }
 
     @staticmethod
     def _add_plant_schema(
         defaults: dict[str, Any] | None = None,
     ) -> vol.Schema:
-        d = defaults or {}
-        return vol.Schema(
-            {
-                vol.Required("plant_name", default=d.get("plant_name", "")): str,
-                vol.Optional("last_watered"): selector.DateSelector(),
-                vol.Optional("last_fertilized"): selector.DateSelector(),
-                vol.Optional(
-                    "watering_interval",
-                    default=int(d.get("watering_interval", 14)),
-                ): selector.NumberSelector(
-                    selector.NumberSelectorConfig(min=1, max=100, step=1, mode=selector.NumberSelectorMode.SLIDER)
-                ),
-                vol.Optional(
-                    "watering_postponed",
-                    default=int(d.get("watering_postponed", 0)),
-                ): selector.NumberSelector(
-                    selector.NumberSelectorConfig(min=0, max=100, step=1, mode=selector.NumberSelectorMode.SLIDER)
-                ),
-                vol.Optional(
-                    "fertilizing_interval",
-                    default=int(d.get("fertilizing_interval", 0)),
-                ): selector.NumberSelector(
-                    selector.NumberSelectorConfig(min=0, max=365, step=1, mode=selector.NumberSelectorMode.SLIDER)
-                ),
-                vol.Optional("inside", default=bool(d.get("inside", True))): selector.BooleanSelector(),
-                vol.Optional("image", default=d.get("image", "")): selector.TextSelector(),
-            }
-        )
+        return vol.Schema(PlantDiaryOptionsFlow._plant_form_fields(defaults or {}))
+
+    @staticmethod
+    def _edit_plant_details_schema(defaults: dict[str, Any]) -> vol.Schema:
+        fields = {
+            **PlantDiaryOptionsFlow._plant_form_fields(defaults),
+            vol.Optional("delete_this_plant", default=False): selector.BooleanSelector(),
+        }
+        return vol.Schema(fields)
 
     def _edit_plant_pick_schema(self) -> vol.Schema:
         plants = _plants_dict(self.config_entry)
         options = [
-            {"value": plant_id, "label": f"{data.get('plant_name', plant_id)} ({plant_id})"}
+            {
+                "value": plant_id,
+                "label": f"{data.get('plant_name', plant_id)} ({plant_id})",
+            }
             for plant_id, data in sorted(plants.items(), key=lambda x: x[0].lower())
         ]
         return vol.Schema(
             {
                 vol.Required("plant_id"): selector.SelectSelector(
-                    selector.SelectSelectorConfig(options=options, mode=selector.SelectSelectorMode.DROPDOWN)
+                    selector.SelectSelectorConfig(
+                        options=options, mode=selector.SelectSelectorMode.DROPDOWN
+                    )
                 )
             }
         )
@@ -269,7 +332,10 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
     def _attach_rf_tag_schema(self) -> vol.Schema:
         plants = _plants_dict(self.config_entry)
         options = [
-            {"value": plant_id, "label": f"{data.get('plant_name', plant_id)} ({plant_id})"}
+            {
+                "value": plant_id,
+                "label": f"{data.get('plant_name', plant_id)} ({plant_id})",
+            }
             for plant_id, data in sorted(plants.items(), key=lambda x: x[0].lower())
         ]
         return vol.Schema(
@@ -361,7 +427,9 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
             self._edit_plant_id = user_input["plant_id"]
             return await self.async_step_edit_plant_details()
 
-        return self.async_show_form(step_id="edit_plant", data_schema=self._edit_plant_pick_schema())
+        return self.async_show_form(
+            step_id="edit_plant", data_schema=self._edit_plant_pick_schema()
+        )
 
     async def async_step_edit_plant_details(
         self, user_input: dict[str, Any] | None = None
@@ -382,12 +450,22 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
             return await self.async_step_edit_plant()
 
         if user_input is not None:
+            if user_input.get("delete_this_plant"):
+                self._delete_plant_id = plant_id
+                return await self.async_step_delete_confirm()
+
             await manager.update_plant(
                 {
                     "plant_id": plant_id,
-                    "plant_name": user_input.get("plant_name", plant_data.get("plant_name", plant_id)),
-                    "last_watered": _coerce_date_for_plant(user_input.get("last_watered")),
-                    "last_fertilized": _coerce_date_for_plant(user_input.get("last_fertilized")),
+                    "plant_name": user_input.get(
+                        "plant_name", plant_data.get("plant_name", plant_id)
+                    ),
+                    "last_watered": _coerce_date_for_plant(
+                        user_input.get("last_watered")
+                    ),
+                    "last_fertilized": _coerce_date_for_plant(
+                        user_input.get("last_fertilized")
+                    ),
                     "watering_interval": user_input.get("watering_interval", 14),
                     "watering_postponed": user_input.get("watering_postponed", 0),
                     "fertilizing_interval": user_input.get("fertilizing_interval", 0),
@@ -417,22 +495,8 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
         }
         return self.async_show_form(
             step_id="edit_plant_details",
-            data_schema=self._add_plant_schema(defaults),
+            data_schema=self._edit_plant_details_schema(defaults),
         )
-
-    async def async_step_delete_plant(
-        self, user_input: dict[str, Any] | None = None
-    ) -> config_entries.ConfigFlowResult:
-        """Pick a plant to delete."""
-        plants = _plants_dict(self.config_entry)
-        if not plants:
-            return self.async_abort(reason="no_plants")
-
-        if user_input is not None:
-            self._delete_plant_id = user_input["plant_id"]
-            return await self.async_step_delete_confirm()
-
-        return self.async_show_form(step_id="delete_plant", data_schema=self._edit_plant_pick_schema())
 
     async def async_step_delete_confirm(
         self, user_input: dict[str, Any] | None = None
@@ -444,19 +508,23 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
 
         plant_id = self._delete_plant_id
         if not plant_id:
-            return await self.async_step_delete_plant()
+            return await self.async_step_edit_plant()
 
         if user_input is not None:
             if not user_input.get("confirm_delete"):
+                self._edit_plant_id = self._delete_plant_id
                 self._delete_plant_id = None
-                return await self.async_step_delete_plant()
+                return await self.async_step_edit_plant_details()
             await manager.delete_plant(plant_id)
             self._delete_plant_id = None
+            self._edit_plant_id = None
             return self._finish_options_unchanged()
 
         schema = vol.Schema(
             {
-                vol.Required("confirm_delete", default=False): selector.BooleanSelector(),
+                vol.Required(
+                    "confirm_delete", default=False
+                ): selector.BooleanSelector(),
             }
         )
         return self.async_show_form(

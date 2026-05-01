@@ -80,7 +80,7 @@ HA Plants is set up only through the Home Assistant UI: do not add a `plant_diar
 
 1. Go to **Settings > Devices & Services > Add integration**.
 2. Search for **HA Plants** and add it.
-3. Open **HA Plants** on the integration card, then **Configure** to open the menu: **Reminder notifications**, **Add plant**, **Edit plant**, or **Delete plant**. You can also use the **`plant_diary`** actions under **Developer tools → Actions** (for example **HA Plants: Create Plant**).
+3. Open **HA Plants** on the integration card, then **Configure** to open the menu: **Reminder notifications**, **Manage plants** (add / edit; you can delete from the edit screen), or **Manage RF/NFC tags** (link / remove). You can also use the **`plant_diary`** actions under **Developer tools → Actions** (for example **HA Plants: Create plant**).
 
 ### Reminder notifications
 

@@ -17,10 +17,21 @@
         "title": "HA Plants",
         "menu_options": {
           "reminder_settings": "Reminder notifications",
+          "manage_plants": "Manage plants",
+          "manage_tags": "Manage RF/NFC tags"
+        }
+      },
+      "manage_plants": {
+        "title": "Manage plants",
+        "menu_options": {
           "add_plant": "Add plant",
-          "edit_plant": "Edit plant",
-          "delete_plant": "Delete plant",
-          "attach_rf_tag": "Link RF/NFC tag to plant",
+          "edit_plant": "Edit plant"
+        }
+      },
+      "manage_tags": {
+        "title": "Manage RF/NFC tags",
+        "menu_options": {
+          "attach_rf_tag": "Link tag to plant",
           "remove_rf_tag": "Remove tag link"
         }
       },
@@ -62,13 +73,8 @@
           "watering_postponed": "Watering postponed (days)",
           "fertilizing_interval": "Fertilizing interval (days, 0 = off)",
           "inside": "Indoor plant",
-          "image": "Image URL (optional)"
-        }
-      },
-      "delete_plant": {
-        "title": "Choose plant to delete",
-        "data": {
-          "plant_id": "Plant"
+          "image": "Image URL (optional)",
+          "delete_this_plant": "Delete this plant (you will confirm on the next step)"
         }
       },
       "delete_confirm": {
