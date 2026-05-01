@@ -13,23 +13,35 @@ from homeassistant.loader import Integration
 from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.plant_diary import (
+from custom_components.ha_plants import (
     async_reload_entry,
     config_flow,
+    ensure_ha_plants_www_layout,
 )
-from custom_components.plant_diary.const import DOMAIN
+from custom_components.ha_plants.const import DOMAIN
+
+
+def test_ensure_ha_plants_www_layout_creates_directories(
+    tmp_path: pathlib.Path,
+) -> None:
+    """Startup helper creates www/ha_plants/images under the config directory."""
+    ensure_ha_plants_www_layout(str(tmp_path))
+    assert (tmp_path / "www" / "ha_plants" / "images").is_dir()
+    ensure_ha_plants_www_layout(str(tmp_path))
+    assert (tmp_path / "www" / "ha_plants" / "images").is_dir()
+
 
 @pytest.mark.asyncio
 async def test_flow_user_init(hass) -> None:
     """Test the initialization of the form in the first step of the config flow."""
 
     # Registramos manualmente el flujo
-    config_entries.HANDLERS[config_flow.DOMAIN] = config_flow.PlantDiaryConfigFlow
+    config_entries.HANDLERS[config_flow.DOMAIN] = config_flow.HAPlantsConfigFlow
 
     mock_integration = Integration(
         hass=hass,
-        pkg_path="custom_components.plant_diary",
-        file_path=pathlib.Path("custom_components/plant_diary/__init__.py"),
+        pkg_path="custom_components.ha_plants",
+        file_path=pathlib.Path("custom_components/ha_plants/__init__.py"),
         manifest={
             "domain": config_flow.DOMAIN,
             "name": "HA Plants",
@@ -40,17 +52,17 @@ async def test_flow_user_init(hass) -> None:
             "is_built_in": False,
         },
         top_level_files={
-            "custom_components/plant_diary/manifest.json",
-            "custom_components/plant_diary/config_flow.py",
-            "custom_components/plant_diary/const.py",
-            "custom_components/plant_diary/PlantDiaryEntity.py",
-            "custom_components/plant_diary/PlantDiaryManager.py ",
-            "custom_components/plant_diary/services.yaml",
+            "custom_components/ha_plants/manifest.json",
+            "custom_components/ha_plants/config_flow.py",
+            "custom_components/ha_plants/const.py",
+            "custom_components/ha_plants/ha_plants_entity.py",
+            "custom_components/ha_plants/ha_plants_manager.py",
+            "custom_components/ha_plants/services.yaml",
         },
     )
 
     mock_config_flow_module = types.SimpleNamespace()
-    mock_config_flow_module.PlantDiaryConfigFlow = config_flow.PlantDiaryConfigFlow
+    mock_config_flow_module.HAPlantsConfigFlow = config_flow.HAPlantsConfigFlow
     mock_integration.async_get_platform = mock.AsyncMock(
         return_value=mock_config_flow_module
     )
@@ -68,7 +80,7 @@ async def test_flow_user_init(hass) -> None:
             return_value={config_flow.DOMAIN: mock_integration},
         ),
         mock.patch(
-            "custom_components.plant_diary.PlantDiaryManager.async_track_time_change",
+            "custom_components.ha_plants.ha_plants_manager.async_track_time_change",
             return_value=mock.Mock(),
         ),
     ):
@@ -89,7 +101,7 @@ async def test_flow_user_init(hass) -> None:
         "type": mock.ANY,
         "version": 1,
         "description_placeholders": None,
-        "handler": "plant_diary",
+        "handler": "ha_plants",
     }
     assert expected == result
 
@@ -107,7 +119,7 @@ async def test_options_flow_init_shows_menu(hass) -> None:
     )
     entry.add_to_hass(hass)
 
-    flow = config_flow.PlantDiaryOptionsFlow()
+    flow = config_flow.HAPlantsOptionsFlow()
     flow.hass = hass
     flow.handler = entry.entry_id
 
@@ -123,11 +135,11 @@ async def test_async_reload_entry():
 
     with (
         patch(
-            "custom_components.plant_diary.async_unload_entry",
+            "custom_components.ha_plants.async_unload_entry",
             new_callable=AsyncMock,
         ) as mock_unload,
         patch(
-            "custom_components.plant_diary.async_setup_entry",
+            "custom_components.ha_plants.async_setup_entry",
             new_callable=AsyncMock,
         ) as mock_setup,
     ):

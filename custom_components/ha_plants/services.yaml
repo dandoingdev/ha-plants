@@ -54,9 +54,9 @@ create_plant:
           step: 1
     image:
       name: Image
-      description: URL served from /config/www (e.g. /local/plant_diary/Monstera.jpg)
+      description: URL served from /config/www (HA Plants default folder maps to /local/ha_plants/…, e.g. /local/ha_plants/Monstera.jpg)
       required: false
-      example: "/local/plant_diary/Monstera.jpg"
+      example: "/local/ha_plants/Monstera.jpg"
       selector:
         text:
 update_plant:
@@ -115,9 +115,9 @@ update_plant:
           step: 1
     image:
       name: Image
-      description: URL served from /config/www (e.g. /local/plant_diary/Monstera.jpg)
+      description: URL served from /config/www (HA Plants default folder maps to /local/ha_plants/…, e.g. /local/ha_plants/Monstera.jpg)
       required: false
-      example: "/local/plant_diary/Monstera.jpg"
+      example: "/local/ha_plants/Monstera.jpg"
       selector:
         text:
 delete_plant:

@@ -1,7 +1,7 @@
 """Constants for the HA Plants custom component."""
 
-DOMAIN = "plant_diary"
-PLANT_DIARY_MANAGER = "plant_diary_manager"
+DOMAIN = "ha_plants"
+HA_PLANTS_MANAGER = "ha_plants_manager"
 
 CONF_REMINDERS_ENABLED = "reminders_enabled"
 CONF_REMINDER_HOUR = "reminder_hour"

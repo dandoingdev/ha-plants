@@ -11,8 +11,8 @@ from homeassistant.util.dt import now
 from .const import DOMAIN
 
 
-class PlantDiaryEntity(SensorEntity):
-    """Representation of a plant diary sensor."""
+class HAPlantsEntity(SensorEntity):
+    """Representation of an HA Plants sensor."""
 
     def __init__(self, plant_id: str, data: dict[str, Any]) -> None:
         """Initialize the sensor."""

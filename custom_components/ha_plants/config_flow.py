@@ -18,9 +18,9 @@ from .const import (
     DEFAULT_REMINDER_MINUTE,
     DOMAIN,
     OPTION_RF_TAG_MAP,
-    PLANT_DIARY_MANAGER,
+    HA_PLANTS_MANAGER,
 )
-from .PlantDiaryManager import PlantDiaryManager
+from .ha_plants_manager import HAPlantsManager
 
 # Dict labels display even if backend translations are not yet cached (list menus rely on i18n only).
 OPTIONS_MENU_INIT: dict[str, str] = {
@@ -63,7 +63,7 @@ def _coerce_reminder_time(value: Any) -> tuple[int, int]:
 
 
 def _coerce_date_for_plant(value: Any) -> str:
-    """Normalize to YYYY-MM-DD or Unknown for PlantDiaryEntity."""
+    """Normalize to YYYY-MM-DD or Unknown for HA Plants sensor entities."""
     if value is None:
         return "Unknown"
     if isinstance(value, date) and not isinstance(value, datetime):
@@ -99,7 +99,7 @@ def _rf_tag_map(entry: config_entries.ConfigEntry) -> dict[str, str]:
     return out
 
 
-class PlantDiaryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class HAPlantsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle the configuration flow for the HA Plants integration."""
 
     def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:
@@ -112,7 +112,7 @@ class PlantDiaryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
         """Return the options flow."""
-        return PlantDiaryOptionsFlow()
+        return HAPlantsOptionsFlow()
 
     async def async_step_user(self, user_input=None):
         """Handle the user step in the configuration flow."""
@@ -123,7 +123,7 @@ class PlantDiaryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(title="HA Plants", data={})
 
 
-class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
+class HAPlantsOptionsFlow(config_entries.OptionsFlow):
     """Handle HA Plants options (reminders and plants) in the UI."""
 
     def __init__(self) -> None:
@@ -131,8 +131,8 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
         self._edit_plant_id: str | None = None
         self._delete_plant_id: str | None = None
 
-    def _get_manager(self) -> PlantDiaryManager | None:
-        return self.hass.data.get(DOMAIN, {}).get(PLANT_DIARY_MANAGER)
+    def _get_manager(self) -> HAPlantsManager | None:
+        return self.hass.data.get(DOMAIN, {}).get(HA_PLANTS_MANAGER)
 
     def _finish_options_unchanged(self) -> config_entries.ConfigFlowResult:
         """Close the options flow without changing stored options."""
@@ -300,12 +300,12 @@ class PlantDiaryOptionsFlow(config_entries.OptionsFlow):
     def _add_plant_schema(
         defaults: dict[str, Any] | None = None,
     ) -> vol.Schema:
-        return vol.Schema(PlantDiaryOptionsFlow._plant_form_fields(defaults or {}))
+        return vol.Schema(HAPlantsOptionsFlow._plant_form_fields(defaults or {}))
 
     @staticmethod
     def _edit_plant_details_schema(defaults: dict[str, Any]) -> vol.Schema:
         fields = {
-            **PlantDiaryOptionsFlow._plant_form_fields(defaults),
+            **HAPlantsOptionsFlow._plant_form_fields(defaults),
             vol.Optional("delete_this_plant", default=False): selector.BooleanSelector(),
         }
         return vol.Schema(fields)

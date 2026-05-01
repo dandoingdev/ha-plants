@@ -25,16 +25,16 @@ from .const import (
     OPTION_REMINDER_LAST_SENT,
     OPTION_RF_TAG_MAP,
 )
-from .PlantDiaryEntity import PlantDiaryEntity
+from .ha_plants_entity import HAPlantsEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class PlantDiaryManager:
-    """Manager class to handle multiple PlantDiaryEntity instances."""
+class HAPlantsManager:
+    """Manager class for HA Plants sensor entities."""
 
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
-        """Initialize the PlantDiaryManager with Home Assistant instance and config entry."""
+        """Initialize the HA Plants manager with Home Assistant instance and config entry."""
         self.hass = hass
         self.entry = config_entry
         self.entities = {}
@@ -43,7 +43,7 @@ class PlantDiaryManager:
         self._reminder_listener = None
 
     async def async_init(self):
-        """Initialize the PlantDiaryManager by registering services."""
+        """Initialize the manager by registering services."""
         await self.async_register_services()
 
     async def restore_and_add_entities(self, async_add_entities: AddEntitiesCallback):
@@ -127,7 +127,7 @@ class PlantDiaryManager:
         if isinstance(value, dict):
             inner = value.get("datetime") or value.get("date")
             if inner is not None:
-                return PlantDiaryManager._last_watered_iso(inner)
+                return HAPlantsManager._last_watered_iso(inner)
             return dt_now().date().isoformat()
         return dt_now().date().isoformat()
 
@@ -212,7 +212,7 @@ class PlantDiaryManager:
         )
 
     async def create_plant(self, data: dict):
-        """Create a new PlantDiaryEntity and add it."""
+        """Create a new plant sensor entity and add it."""
         plant_id = data["plant_name"]
         plant_data = {
             "plant_name": data.get("plant_name", plant_id),
@@ -262,7 +262,7 @@ class PlantDiaryManager:
         )
 
     async def delete_plant(self, plant_id: str, update_config_entry: bool = True):
-        """Delete a plant diary entity."""
+        """Delete an HA Plants sensor entity."""
         entity = self.entities.get(plant_id)
         if not entity:
             _LOGGER.error("Plant with ID %s not found", plant_id)
@@ -313,8 +313,8 @@ class PlantDiaryManager:
     async def _add_plant_entity(
         self, plant_id: str, plant_data: dict, save_to_config: bool = False
     ):
-        """Create and add a PlantDiaryEntity."""
-        entity = PlantDiaryEntity(plant_id, plant_data)
+        """Create and add a plant sensor entity."""
+        entity = HAPlantsEntity(plant_id, plant_data)
         self.entities[plant_id] = entity
 
         if self._async_add_entities:
@@ -423,7 +423,7 @@ class PlantDiaryManager:
             message = f"{plant_name} needs fertilizing."
 
         safe_id = plant_id.replace(" ", "_")
-        notification_id = f"plant_diary_reminder_{safe_id}_{kind}"
+        notification_id = f"ha_plants_reminder_{safe_id}_{kind}"
 
         if notify_entity_id and self.hass.services.has_service("notify", "send_message"):
             await self.hass.services.async_call(

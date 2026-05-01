@@ -1,5 +1,5 @@
 {
-  "domain": "plant_diary",
+  "domain": "ha_plants",
   "name": "HA Plants",
   "codeowners": ["@dandoingdev"],
   "config_flow": true,

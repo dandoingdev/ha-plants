@@ -7,8 +7,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 
-from custom_components.plant_diary.const import DOMAIN, PLANT_DIARY_MANAGER
-from custom_components.plant_diary.sensor import async_setup_entry
+from custom_components.ha_plants.const import DOMAIN, HA_PLANTS_MANAGER
+from custom_components.ha_plants.sensor import async_setup_entry
 
 
 @pytest.mark.asyncio
@@ -21,7 +21,7 @@ async def test_async_setup_entry_calls_restore(caplog):
     mock_manager = MagicMock()
     mock_manager.restore_and_add_entities = AsyncMock()
 
-    hass.data = {DOMAIN: {PLANT_DIARY_MANAGER: mock_manager}}
+    hass.data = {DOMAIN: {HA_PLANTS_MANAGER: mock_manager}}
 
     # Define a dummy async_add_entities callback
     def add_entities(
@@ -35,7 +35,7 @@ async def test_async_setup_entry_calls_restore(caplog):
 
     mock_manager.restore_and_add_entities.assert_awaited_once_with(add_entities)
 
-    hass.data[DOMAIN].pop(PLANT_DIARY_MANAGER)
+    hass.data[DOMAIN].pop(HA_PLANTS_MANAGER)
     caplog.clear()
     await async_setup_entry(hass, entry, hass.async_add_entities)
-    assert "PlantDiaryManager not found in hass.data" in caplog.text
+    assert "HA Plants manager not found in hass.data" in caplog.text

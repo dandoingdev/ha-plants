@@ -1,9 +1,9 @@
-# Test cases for PlantDiaryEntity class in the HA Plants custom component for Home Assistant
+# Test cases for HAPlantsEntity in the HA Plants custom component for Home Assistant
 from datetime import date, timedelta
 
 import pytest
 
-from custom_components.plant_diary.PlantDiaryEntity import PlantDiaryEntity
+from custom_components.ha_plants.ha_plants_entity import HAPlantsEntity
 
 
 @pytest.mark.asyncio
@@ -11,7 +11,7 @@ async def test_plantdiaryentity_initialization() -> None:
     """Test the initialization of the entity."""
     date_1_days_ago = (date.today() - timedelta(days=1)).isoformat()
 
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -25,8 +25,8 @@ async def test_plantdiaryentity_initialization() -> None:
     )
     await entity.async_update()  # Simulate async update
     assert entity._plant_id == "test_plant"
-    assert entity._name == "plant_diary_test_plant"
-    assert entity._unique_id == "plant_diary_test_plant"
+    assert entity._name == "ha_plants_test_plant"
+    assert entity._unique_id == "ha_plants_test_plant"
     assert entity._plant_name == "Test Plant"
     assert (
         entity._last_watered is not None
@@ -45,7 +45,7 @@ async def test_plantdiaryentity_initialization() -> None:
 
 def test_plantdiaryentity_name() -> None:
     """Test the name property of the entity."""
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -57,12 +57,12 @@ def test_plantdiaryentity_name() -> None:
             "inside": True,
         },
     )
-    assert entity.name == "plant_diary_test_plant"
+    assert entity.name == "ha_plants_test_plant"
 
 
 def test_plantdiaryentity_unique_id() -> None:
     """Test the unique ID property of the entity."""
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -74,12 +74,12 @@ def test_plantdiaryentity_unique_id() -> None:
             "inside": True,
         },
     )
-    assert entity.unique_id == "plant_diary_test_plant"
+    assert entity.unique_id == "ha_plants_test_plant"
 
 
 def test_plantdiaryentity_state() -> None:
     """Test the state property of the entity."""
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -96,7 +96,7 @@ def test_plantdiaryentity_state() -> None:
 
 def test_plantdiaryentity_icon() -> None:
     """Test the icon property of the entity."""
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -115,7 +115,7 @@ def test_plantdiaryentity_icon() -> None:
 async def test_plantdiaryentity_attributes() -> None:
     """Test the extra state attributes of the entity."""
     date_1_days_ago = (date.today() - timedelta(days=1)).isoformat()
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -144,7 +144,7 @@ async def test_plantdiaryentity_attributes() -> None:
 @pytest.mark.asyncio
 async def test_plantdiaryentity_update() -> None:
     """Test the async_update method of the entity."""
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -166,7 +166,7 @@ async def test_plantdiaryentity_update() -> None:
 async def test_plantdiaryentity_update_days_since_watered() -> None:
     """Test the update_days_since_last_watered method of the entity."""
     today_str = date.today().strftime("%Y-%m-%d")
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -209,7 +209,7 @@ async def test_plantdiaryentity_update_days_since_watered() -> None:
 
 def test_plantdiaryentity_parse_date() -> None:
     """Test the _parse_date method of the entity."""
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -229,7 +229,7 @@ def test_plantdiaryentity_parse_date() -> None:
 
 def test_plantdiaryentity_clear_cache() -> None:
     """Test that the extra_state_attributes cache is cleared."""
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -251,7 +251,7 @@ def test_plantdiaryentity_clear_cache() -> None:
 
 def test_plantdiaryentity_parse_int() -> None:
     """Test the _parse_int method of the entity."""
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "test_plant",
         {
             "plant_name": "Test Plant",
@@ -276,7 +276,7 @@ def test_plantdiaryentity_parse_int() -> None:
 
 def test_fertilizing_reminder_due() -> None:
     """Fertilizing reminder respects interval and last_fertilized."""
-    entity = PlantDiaryEntity(
+    entity = HAPlantsEntity(
         "p",
         {
             "plant_name": "P",
@@ -291,7 +291,7 @@ def test_fertilizing_reminder_due() -> None:
     assert entity.fertilizing_reminder_due() is True
     assert entity.watering_reminder_due() is False
 
-    entity2 = PlantDiaryEntity(
+    entity2 = HAPlantsEntity(
         "q",
         {
             "plant_name": "Q",
@@ -304,7 +304,7 @@ def test_fertilizing_reminder_due() -> None:
     )
     assert entity2.fertilizing_reminder_due() is False
 
-    entity3 = PlantDiaryEntity(
+    entity3 = HAPlantsEntity(
         "r",
         {
             "plant_name": "R",
